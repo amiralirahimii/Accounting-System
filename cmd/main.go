@@ -3,6 +3,7 @@ package main
 import (
 	"accountingsystem/config"
 	"accountingsystem/db"
+	"accountingsystem/internal/requests/dl"
 	"accountingsystem/internal/services"
 	"fmt"
 )
@@ -19,7 +20,7 @@ func main() {
 
 	dlService := &services.DLService{}
 
-	newDL, err := dlService.CreateDL(&services.CreateDLRequest{
+	newDL, err := dlService.CreateDL(&dl.InsertRequest{
 		Code:  "001",
 		Title: "Example DL",
 	})
