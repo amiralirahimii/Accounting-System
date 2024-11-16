@@ -21,14 +21,22 @@ func main() {
 
 	dlService := &services.DLService{}
 
-	newDL, err := dlService.CreateDL(&dl.InsertRequest{
-		Code:  "001",
-		Title: "Example DL",
+	// newDL, err := dlService.CreateDL(&dl.InsertRequest{
+	// 	Code:  "001",
+	// 	Title: "Example DL",
+	// })
+	// if err != nil {
+	// 	fmt.Printf("Error creating DL: %v\n", err)
+	// }
+
+	newDL1, err1 := dlService.UpdateDL(&dl.UpdateRequest{
+		ID:    1,
+		Code:  "002",
+		Title: "Example DL 1",
 	})
-	if err != nil {
-		fmt.Printf("Error creating DL: %v\n", err)
-		return
+	if err1 != nil {
+		fmt.Printf("Error creating DL: %v\n", err1)
 	}
 
-	fmt.Printf("DL created successfully: %+v\n", newDL)
+	fmt.Printf("DL created successfully: %+v\n", newDL1)
 }

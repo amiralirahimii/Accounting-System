@@ -9,4 +9,6 @@ var (
 	ErrTitleEmptyOrTooLong = errors.New("title cannot be empty or more than 64 characters")
 	ErrCodeAlreadyExists   = errors.New("code should be unique")
 	ErrTitleAlreadyExists  = errors.New("title should be unique")
+	ErrDLNotFound          = errors.New("DL not found")
+	ErrVersionOutdated     = errors.New("version is outdated")
 )
