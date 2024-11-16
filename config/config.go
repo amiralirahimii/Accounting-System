@@ -1,7 +1,7 @@
 package config
 
 import (
-	"errors"
+	"accountingsystem/internal/constants"
 	"log"
 	"os"
 
@@ -21,5 +21,5 @@ func GetEnv(key string) (string, error) {
 	if value, exists := os.LookupEnv(key); exists {
 		return value, nil
 	}
-	return "", errors.New("env not found")
+	return "", constants.ErrEnvNotFound
 }

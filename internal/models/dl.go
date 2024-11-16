@@ -11,7 +11,6 @@ type DL struct {
 	UpdatedAt  time.Time `gorm:"autoUpdateTime"`
 }
 
-// TableName overrides the default table name used by GORM
 func (DL) TableName() string {
 	return "dl"
 }

@@ -6,15 +6,16 @@ import (
 	"accountingsystem/internal/requests/dl"
 	"accountingsystem/internal/services"
 	"fmt"
+	"log"
 )
 
 func main() {
 	if err := config.InitConfig(); err != nil {
-		fmt.Printf("Error initing config: %v\n", err)
+		log.Fatalf("Error initing config: %v\n", err)
 		return
 	}
 	if err := db.Init(); err != nil {
-		fmt.Printf("Error initing database: %v\n", err)
+		log.Fatalf("Error initing database: %v\n", err)
 		return
 	}
 
