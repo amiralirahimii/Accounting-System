@@ -90,3 +90,27 @@ func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*models.DL, error) {
 
 	return &targerDL, nil
 }
+
+func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
+	var targerDL models.DL
+	if err := db.DB.Find(&targerDL, req.ID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return constants.ErrDLNotFound
+		}
+		log.Printf("unexpected error while checking for duplicates: %v", err)
+		return constants.ErrUnexpectedError
+	}
+
+	if targerDL.RowVersion != req.Version {
+		return constants.ErrVersionOutdated
+	}
+
+	// TODO check for any refrences here before deleting
+
+	if err := db.DB.Delete(&targerDL).Error; err != nil {
+		log.Printf("unexpected error while deleting DL: %v", err)
+		return constants.ErrUnexpectedError
+	}
+
+	return nil
+}
