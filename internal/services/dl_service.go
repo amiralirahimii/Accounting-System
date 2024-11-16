@@ -60,7 +60,7 @@ func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*models.DL, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, constants.ErrDLNotFound
 		}
-		log.Printf("unexpected error while checking for duplicates: %v", err)
+		log.Printf("unexpected error while finding DL: %v", err)
 		return nil, constants.ErrUnexpectedError
 	}
 
@@ -97,7 +97,7 @@ func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return constants.ErrDLNotFound
 		}
-		log.Printf("unexpected error while checking for duplicates: %v", err)
+		log.Printf("unexpected error while finding DL: %v", err)
 		return constants.ErrUnexpectedError
 	}
 
@@ -113,4 +113,17 @@ func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
 	}
 
 	return nil
+}
+
+func (s *DLService) GetDL(req *dl.GetRequest) (*models.DL, error) {
+	var targerDL models.DL
+	if err := db.DB.Find(&targerDL, req.ID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, constants.ErrDLNotFound
+		}
+		log.Printf("unexpected error while finding DL: %v", err)
+		return nil, constants.ErrUnexpectedError
+	}
+
+	return &targerDL, nil
 }
