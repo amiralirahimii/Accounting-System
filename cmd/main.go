@@ -2,22 +2,23 @@ package main
 
 import (
 	"accountingsystem/config"
+	"accountingsystem/db"
 	"accountingsystem/internal/services"
 	"fmt"
 )
 
 func main() {
-	// Initialize the database connection
-	err := config.InitConfig()
-	if err != nil {
+	if err := config.InitConfig(); err != nil {
 		fmt.Printf("Error initing config: %v\n", err)
 		return
 	}
+	if err := db.Init(); err != nil {
+		fmt.Printf("Error initing database: %v\n", err)
+		return
+	}
 
-	// Instantiate the service
 	dlService := &services.DLService{}
 
-	// Example: Creating a new DL
 	newDL, err := dlService.CreateDL(&services.CreateDLRequest{
 		Code:  "001",
 		Title: "Example DL",
