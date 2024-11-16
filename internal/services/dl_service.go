@@ -1,7 +1,7 @@
 package services
 
 import (
-	"accountingsystem/config"
+	"accountingsystem/db"
 	"accountingsystem/internal/models"
 	"errors"
 )
@@ -33,7 +33,7 @@ func (s *DLService) CreateDL(req *CreateDLRequest) (*models.DL, error) {
 	}
 
 	// Save to database
-	if err := config.DB.Create(dl).Error; err != nil {
+	if err := db.DB.Create(dl).Error; err != nil {
 		return nil, err
 	}
 

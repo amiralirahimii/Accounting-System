@@ -8,7 +8,11 @@ import (
 
 func main() {
 	// Initialize the database connection
-	config.InitDB()
+	err := config.InitConfig()
+	if err != nil {
+		fmt.Printf("Error initing config: %v\n", err)
+		return
+	}
 
 	// Instantiate the service
 	dlService := &services.DLService{}
