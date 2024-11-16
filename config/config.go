@@ -8,8 +8,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func InitConfig() error {
-	err := godotenv.Load()
+func InitConfig(envFile string) error {
+	err := godotenv.Load(envFile)
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 		return err
