@@ -48,6 +48,7 @@ func (s *SLService) CreateSL(req *sl.InsertRequest) (*models.SL, error) {
 	return &sl, nil
 }
 
+// TODO check for any refrences here before updating
 func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*models.SL, error) {
 	if req.Code == "" || len(req.Code) > 64 {
 		return nil, constants.ErrCodeEmptyOrTooLong
@@ -94,6 +95,7 @@ func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*models.SL, error) {
 	return &targetSL, nil
 }
 
+// TODO check for any refrences here before deleting
 func (s *SLService) DeleteSL(req *sl.DeleteRequest) error {
 	var targetSL models.SL
 	if err := db.DB.Where("id = ?", req.ID).First(&targetSL).Error; err != nil {
