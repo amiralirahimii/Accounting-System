@@ -377,7 +377,8 @@ func Test_DeleteDL_Succeeds_WithValidID(t *testing.T) {
 	createdDL, _ := createRandomDL(&service)
 
 	deleteReq := &dl.DeleteRequest{
-		ID: createdDL.ID,
+		ID:      createdDL.ID,
+		Version: createdDL.RowVersion,
 	}
 
 	err := service.DeleteDL(deleteReq)
@@ -404,7 +405,8 @@ func Test_DeleteDL_ReturnsErrDLNotFound_WithDeletedID(t *testing.T) {
 	createdDL, _ := createRandomDL(&service)
 
 	deleteReq := &dl.DeleteRequest{
-		ID: createdDL.ID,
+		ID:      createdDL.ID,
+		Version: createdDL.RowVersion,
 	}
 
 	err := service.DeleteDL(deleteReq)
@@ -443,3 +445,5 @@ func Test_DeleteDL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrVersionOutdated)
 }
+
+
