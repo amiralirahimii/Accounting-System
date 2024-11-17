@@ -4,6 +4,7 @@ import (
 	"accountingsystem/config"
 	"accountingsystem/db"
 	"accountingsystem/internal/constants"
+	"accountingsystem/internal/models"
 	"accountingsystem/internal/requests/dl"
 	"log"
 	"math/rand"
@@ -38,6 +39,10 @@ func generateRandomString(length int) string {
 		b[i] = charset[seededRand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+func generateRandomInt64() int {
+	return int(seededRand.Uint64() & 0x7FFFFFFFFFFFFFFF)
 }
 
 func Test_CreateDL_Succeeds_WithValidRequest(t *testing.T) {
@@ -164,4 +169,128 @@ func Test_CreateDL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleAlreadyExists)
 	assert.Nil(t, dl)
+}
+
+func createRandomDL(s *DLService) (*models.DL, error) {
+	randomCode := "DL" + generateRandomString(20)
+	randomTitle := "Test" + generateRandomString(20)
+	req := &dl.InsertRequest{
+		Code:  randomCode,
+		Title: randomTitle,
+	}
+	createDL, err := s.CreateDL(req)
+	return createDL, err
+}
+
+func Test_UpdateDL_Succeeds_WithValidRequest(t *testing.T) {
+	service := DLService{}
+	createdDL, err := createRandomDL(&service)
+	require.Nil(t, err)
+
+	newRandomCode := "DL" + generateRandomString(20)
+	newRandomTitle := "Test" + generateRandomString(20)
+	updateReq := &dl.UpdateRequest{
+		ID:    createdDL.ID,
+		Code:  newRandomCode,
+		Title: newRandomTitle,
+	}
+
+	updatedDL, err := service.UpdateDL(updateReq)
+
+	require.Nil(t, err)
+	assert.Equal(t, updatedDL.Code, updateReq.Code)
+	assert.Equal(t, updatedDL.Title, updateReq.Title)
+}
+
+func Test_UpdateDL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
+	service := DLService{}
+	createdDL, _ := createRandomDL(&service)
+
+	newRandomTitle := "Test" + generateRandomString(20)
+	updateReq := &dl.UpdateRequest{
+		ID:    createdDL.ID,
+		Code:  "",
+		Title: newRandomTitle,
+	}
+
+	updatedDL, err := service.UpdateDL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
+	assert.Nil(t, updatedDL)
+}
+
+func Test_UpdateDL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
+	service := DLService{}
+	createdDL, _ := createRandomDL(&service)
+
+	newRandomCode := generateRandomString(65)
+	newRandomTitle := "Test" + generateRandomString(20)
+	updateReq := &dl.UpdateRequest{
+		ID:    createdDL.ID,
+		Code:  newRandomCode,
+		Title: newRandomTitle,
+	}
+
+	updatedDL, err := service.UpdateDL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
+	assert.Nil(t, updatedDL)
+}
+
+func Test_UpdateDL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
+	service := DLService{}
+	createdDL, _ := createRandomDL(&service)
+
+	newRandomCode := "DL" + generateRandomString(20)
+	updateReq := &dl.UpdateRequest{
+		ID:    createdDL.ID,
+		Code:  newRandomCode,
+		Title: "",
+	}
+
+	updatedDL, err := service.UpdateDL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
+	assert.Nil(t, updatedDL)
+}
+
+func Test_UpdateDL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) {
+	service := DLService{}
+	createdDL, _ := createRandomDL(&service)
+
+	newRandomCode := "DL" + generateRandomString(20)
+	newRandomTitle := generateRandomString(65)
+	updateReq := &dl.UpdateRequest{
+		ID:    createdDL.ID,
+		Code:  newRandomCode,
+		Title: newRandomTitle,
+	}
+
+	updatedDL, err := service.UpdateDL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
+	assert.Nil(t, updatedDL)
+}
+
+func Test_UpdateDL_ReturnsErrDLNotFound_WithNonExistingID(t *testing.T) {
+	service := DLService{}
+	newRandomCode := "DL" + generateRandomString(20)
+	newRandomTitle := "Test" + generateRandomString(20)
+	newID := generateRandomInt64()
+
+	updateReq := &dl.UpdateRequest{
+		ID:    newID,
+		Code:  newRandomCode,
+		Title: newRandomTitle,
+	}
+
+	updatedDL, err := service.UpdateDL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrDLNotFound)
+	assert.Nil(t, updatedDL)
 }
