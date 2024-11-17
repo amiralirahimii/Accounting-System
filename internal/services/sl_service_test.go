@@ -145,3 +145,218 @@ func Test_CreateSL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) 
 	assert.ErrorIs(t, err, constants.ErrTitleAlreadyExists)
 	assert.Nil(t, sl)
 }
+
+func Test_UpdateSL_Succeeds_WithValidRequest(t *testing.T) {
+	service := SLService{}
+	createdSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	newRandomCode := "SL" + generateRandomString(20)
+	newRandomTitle := "UpdatedTitle" + generateRandomString(20)
+	updateReq := &sl.UpdateRequest{
+		ID:      createdSL.ID,
+		Code:    newRandomCode,
+		Title:   newRandomTitle,
+		HasDL:   true,
+		Version: createdSL.RowVersion,
+	}
+
+	updatedSL, err := service.UpdateSL(updateReq)
+
+	require.Nil(t, err)
+	assert.Equal(t, updatedSL.Code, updateReq.Code)
+	assert.Equal(t, updatedSL.Title, updateReq.Title)
+	assert.Equal(t, updatedSL.HasDL, updateReq.HasDL)
+}
+
+func Test_UpdateSL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
+	service := SLService{}
+	createdSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	newRandomTitle := "UpdatedTitle" + generateRandomString(20)
+	updateReq := &sl.UpdateRequest{
+		ID:      createdSL.ID,
+		Code:    "",
+		Title:   newRandomTitle,
+		HasDL:   false,
+		Version: createdSL.RowVersion,
+	}
+
+	updatedSL, err := service.UpdateSL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
+	assert.Nil(t, updatedSL)
+}
+
+func Test_UpdateSL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
+	service := SLService{}
+	createdSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	newRandomCode := generateRandomString(65)
+	newRandomTitle := "UpdatedTitle" + generateRandomString(20)
+	updateReq := &sl.UpdateRequest{
+		ID:      createdSL.ID,
+		Code:    newRandomCode,
+		Title:   newRandomTitle,
+		HasDL:   true,
+		Version: createdSL.RowVersion,
+	}
+
+	updatedSL, err := service.UpdateSL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
+	assert.Nil(t, updatedSL)
+}
+
+func Test_UpdateSL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
+	service := SLService{}
+	createdSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	newRandomCode := "SL" + generateRandomString(20)
+	updateReq := &sl.UpdateRequest{
+		ID:      createdSL.ID,
+		Code:    newRandomCode,
+		Title:   "",
+		HasDL:   false,
+		Version: createdSL.RowVersion,
+	}
+
+	updatedSL, err := service.UpdateSL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
+	assert.Nil(t, updatedSL)
+}
+
+func Test_UpdateSL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) {
+	service := SLService{}
+	createdSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	newRandomCode := "SL" + generateRandomString(20)
+	newRandomTitle := generateRandomString(65)
+	updateReq := &sl.UpdateRequest{
+		ID:      createdSL.ID,
+		Code:    newRandomCode,
+		Title:   newRandomTitle,
+		HasDL:   true,
+		Version: createdSL.RowVersion,
+	}
+
+	updatedSL, err := service.UpdateSL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
+	assert.Nil(t, updatedSL)
+}
+
+func Test_UpdateSL_ReturnsErrSLNotFound_WithNonExistingID(t *testing.T) {
+	service := SLService{}
+	newRandomCode := "SL" + generateRandomString(20)
+	newRandomTitle := "NewTitle" + generateRandomString(20)
+
+	updateReq := &sl.UpdateRequest{
+		ID:    generateRandomInt64(),
+		Code:  newRandomCode,
+		Title: newRandomTitle,
+		HasDL: true,
+	}
+
+	updatedSL, err := service.UpdateSL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrSLNotFound)
+	assert.Nil(t, updatedSL)
+}
+
+func Test_UpdateSL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
+	service := SLService{}
+	createdSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	newRandomCode := "SL" + generateRandomString(20)
+	newRandomTitle := "NewTitle" + generateRandomString(20)
+
+	updateReq1 := &sl.UpdateRequest{
+		ID:      createdSL.ID,
+		Code:    newRandomCode,
+		Title:   newRandomTitle,
+		HasDL:   true,
+		Version: createdSL.RowVersion,
+	}
+
+	_, err = service.UpdateSL(updateReq1)
+	require.Nil(t, err)
+
+	newRandomCode2 := "SL" + generateRandomString(20)
+	newRandomTitle2 := "NewTitle" + generateRandomString(20)
+
+	updateReq2 := &sl.UpdateRequest{
+		ID:      createdSL.ID,
+		Code:    newRandomCode2,
+		Title:   newRandomTitle2,
+		HasDL:   false,
+		Version: createdSL.RowVersion,
+	}
+
+	updatedSL, err := service.UpdateSL(updateReq2)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrVersionOutdated)
+	assert.Nil(t, updatedSL)
+}
+
+func Test_UpdateSL_ReturnsErrCodeAlreadyExists_WithExistingCode(t *testing.T) {
+	service := SLService{}
+	createdSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	duplicateSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	newRandomTitle := "NewTitle" + generateRandomString(20)
+
+	updateReq := &sl.UpdateRequest{
+		ID:      createdSL.ID,
+		Code:    duplicateSL.Code,
+		Title:   newRandomTitle,
+		HasDL:   true,
+		Version: createdSL.RowVersion,
+	}
+
+	updatedSL, err := service.UpdateSL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrCodeAlreadyExists)
+	assert.Nil(t, updatedSL)
+}
+
+func Test_UpdateSL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) {
+	service := SLService{}
+	createdSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	duplicateSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	newRandomCode := "SL" + generateRandomString(20)
+
+	updateReq := &sl.UpdateRequest{
+		ID:      createdSL.ID,
+		Code:    newRandomCode,
+		Title:   duplicateSL.Title,
+		HasDL:   true,
+		Version: createdSL.RowVersion,
+	}
+
+	updatedSL, err := service.UpdateSL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrTitleAlreadyExists)
+	assert.Nil(t, updatedSL)
+}
