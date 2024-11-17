@@ -3,15 +3,19 @@ package services
 import (
 	"accountingsystem/config"
 	"accountingsystem/db"
-	"accountingsystem/internal/models"
+	"accountingsystem/internal/constants"
 	"accountingsystem/internal/requests/dl"
 	"log"
+	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func TestMain(m *testing.M) {
 	err := config.InitConfig("../../.env.test")
@@ -27,26 +31,21 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func resetDatabase(t *testing.T) {
-	err := db.DB.Exec("TRUNCATE TABLE dl RESTART IDENTITY CASCADE").Error
-	if err != nil {
-		t.Fatalf("Failed to reset database: %v", err)
+func generateRandomString(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
 	}
+	return string(b)
 }
 
-func seedDL(t *testing.T, dl *models.DL) {
-	err := db.DB.Create(dl).Error
-	if err != nil {
-		t.Fatalf("Failed to seed DL: %v", err)
-	}
-}
-
-func Test_CreateDL_WithValidRequest_Succeeds(t *testing.T) {
-	// resetDatabase(t)
-
+func Test_CreateDL_Succeeds_WithValidRequest(t *testing.T) {
+	randomCode := "DL" + generateRandomString(20)
+	randomTitle := "Test" + generateRandomString(20)
 	req := &dl.InsertRequest{
-		Code:  "DL00211",
-		Title: "Test Ledger11",
+		Code:  randomCode,
+		Title: randomTitle,
 	}
 
 	service := DLService{}
@@ -55,15 +54,114 @@ func Test_CreateDL_WithValidRequest_Succeeds(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, dl.Code, req.Code)
 	assert.Equal(t, dl.Title, dl.Title)
+}
 
-	// Verify database state
-	// var dbDL models.DL
-	// err = db.DB.First(&dbDL, dl.ID).Error
-	// if err != nil {
-	// 	t.Fatalf("Failed to fetch DL from database: %v", err)
-	// }
+func Test_CreateDL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
+	randomTitle := "Test" + generateRandomString(20)
+	req := &dl.InsertRequest{
+		Code:  "",
+		Title: randomTitle,
+	}
 
-	// if dbDL.Code != req.Code || dbDL.Title != req.Title {
-	// 	t.Errorf("Database DL mismatch: got %+v, expected %+v", dbDL, req)
-	// }
+	service := DLService{}
+	dl, err := service.CreateDL(req)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
+	assert.Nil(t, dl)
+}
+
+func Test_CreateDL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
+	randomCode := generateRandomString(65)
+	randomTitle := "Test" + generateRandomString(20)
+	req := &dl.InsertRequest{
+		Code:  randomCode,
+		Title: randomTitle,
+	}
+
+	service := DLService{}
+	dl, err := service.CreateDL(req)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
+	assert.Nil(t, dl)
+}
+
+func Test_CreateDL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
+	randomCode := "DL" + generateRandomString(20)
+	req := &dl.InsertRequest{
+		Code:  randomCode,
+		Title: "",
+	}
+
+	service := DLService{}
+	dl, err := service.CreateDL(req)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
+	assert.Nil(t, dl)
+}
+
+func Test_CreateDL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) {
+	randomCode := "DL" + generateRandomString(20)
+	randomTitle := generateRandomString(65)
+	req := &dl.InsertRequest{
+		Code:  randomCode,
+		Title: randomTitle,
+	}
+
+	service := DLService{}
+	dl, err := service.CreateDL(req)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
+	assert.Nil(t, dl)
+}
+
+func Test_CreateDL_ReturnsErrCodeAlreadyExists_WithExistingCode(t *testing.T) {
+	randomCode := "DL" + generateRandomString(20)
+	randomTitle := "Test" + generateRandomString(20)
+	validReq := &dl.InsertRequest{
+		Code:  randomCode,
+		Title: randomTitle,
+	}
+	randomTitleNotExisting := "Test" + generateRandomString(20)
+	reqWithExistingCode := &dl.InsertRequest{
+		Code:  randomCode,
+		Title: randomTitleNotExisting,
+	}
+
+	service := DLService{}
+	_, err := service.CreateDL(validReq)
+	require.Nil(t, err)
+
+	dl, err := service.CreateDL(reqWithExistingCode)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrCodeAlreadyExists)
+	assert.Nil(t, dl)
+}
+
+func Test_CreateDL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) {
+	randomCode := "DL" + generateRandomString(20)
+	randomTitle := "Test" + generateRandomString(20)
+	validReq := &dl.InsertRequest{
+		Code:  randomCode,
+		Title: randomTitle,
+	}
+	randomCodeNotExisting := "DL" + generateRandomString(20)
+	reqWithExistingTitle := &dl.InsertRequest{
+		Code:  randomCodeNotExisting,
+		Title: randomTitle,
+	}
+
+	service := DLService{}
+	_, err := service.CreateDL(validReq)
+	require.Nil(t, err)
+
+	dl, err := service.CreateDL(reqWithExistingTitle)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrTitleAlreadyExists)
+	assert.Nil(t, dl)
 }
