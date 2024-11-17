@@ -58,7 +58,15 @@ func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*models.SL, error) {
 
 	var targetSL models.SL
 	if err := db.DB.Where("id = ?", req.ID).First(&targetSL).Error; err != nil {
-		return nil, constants.ErrSLNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, constants.ErrSLNotFound
+		}
+		log.Printf("unexpected error while finding DL: %v", err)
+		return nil, constants.ErrUnexpectedError
+	}
+
+	if targetSL.RowVersion != req.Version {
+		return nil, constants.ErrVersionOutdated
 	}
 
 	var existingSL models.SL
