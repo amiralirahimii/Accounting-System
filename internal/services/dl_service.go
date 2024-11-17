@@ -118,7 +118,7 @@ func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
 
 func (s *DLService) GetDL(req *dl.GetRequest) (*models.DL, error) {
 	var targerDL models.DL
-	if err := db.DB.Find(&targerDL, req.ID).Error; err != nil {
+	if err := db.DB.Where("id = ?", req.ID).First(&targerDL).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, constants.ErrDLNotFound
 		}
