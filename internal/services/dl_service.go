@@ -57,7 +57,6 @@ func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*models.DL, error) {
 
 	var targetDL models.DL
 	if err := db.DB.Where("id = ?", req.ID).First(&targetDL).Error; err != nil {
-		println("SALAAAAAAAAm")
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, constants.ErrDLNotFound
 		}
