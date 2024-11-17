@@ -11,4 +11,5 @@ var (
 	ErrTitleAlreadyExists  = errors.New("title should be unique")
 	ErrDLNotFound          = errors.New("DL not found")
 	ErrVersionOutdated     = errors.New("version is outdated")
+	ErrSLNotFound          = errors.New("SL not found")
 )
