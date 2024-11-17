@@ -91,6 +91,7 @@ func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*models.DL, error) {
 	return &targetDL, nil
 }
 
+// TODO check for any refrences here before deleting
 func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
 	var targerDL models.DL
 	if err := db.DB.Where("id = ?", req.ID).First(&targerDL).Error; err != nil {
@@ -104,8 +105,6 @@ func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
 	if targerDL.RowVersion != req.Version {
 		return constants.ErrVersionOutdated
 	}
-
-	// TODO check for any refrences here before deleting
 
 	if err := db.DB.Delete(&targerDL).Error; err != nil {
 		log.Printf("unexpected error while deleting DL: %v", err)
