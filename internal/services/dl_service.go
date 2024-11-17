@@ -55,8 +55,8 @@ func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*models.DL, error) {
 		return nil, constants.ErrTitleEmptyOrTooLong
 	}
 
-	var targerDL models.DL
-	if err := db.DB.Where("id = ?", req.ID).First(&targerDL).Error; err != nil {
+	var targetDL models.DL
+	if err := db.DB.Where("id = ?", req.ID).First(&targetDL).Error; err != nil {
 		println("SALAAAAAAAAm")
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, constants.ErrDLNotFound
@@ -65,7 +65,7 @@ func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*models.DL, error) {
 		return nil, constants.ErrUnexpectedError
 	}
 
-	if targerDL.RowVersion != req.Version {
+	if targetDL.RowVersion != req.Version {
 		return nil, constants.ErrVersionOutdated
 	}
 
@@ -82,14 +82,14 @@ func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*models.DL, error) {
 		return nil, constants.ErrUnexpectedError
 	}
 
-	targerDL.Code = req.Code
-	targerDL.Title = req.Title
-	targerDL.RowVersion++
-	if err := db.DB.Save(&targerDL).Error; err != nil {
+	targetDL.Code = req.Code
+	targetDL.Title = req.Title
+	targetDL.RowVersion++
+	if err := db.DB.Save(&targetDL).Error; err != nil {
 		return nil, err
 	}
 
-	return &targerDL, nil
+	return &targetDL, nil
 }
 
 func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
