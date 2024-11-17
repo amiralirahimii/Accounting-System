@@ -337,7 +337,7 @@ func Test_UpdateDL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) 
 	assert.Nil(t, updatedDL)
 }
 
-func Test_DeleteDL_Succeeds_WithValidID(t *testing.T) {
+func Test_DeleteDL_Succeeds_WithValidRequest(t *testing.T) {
 	service := DLService{}
 	createdDL, _ := createRandomDL(&service)
 
