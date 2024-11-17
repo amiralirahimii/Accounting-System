@@ -93,3 +93,24 @@ func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*models.SL, error) {
 
 	return &targetSL, nil
 }
+
+func (s *SLService) DeleteSL(req *sl.DeleteRequest) error {
+	var targetSL models.SL
+	if err := db.DB.Where("id = ?", req.ID).First(&targetSL).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return constants.ErrSLNotFound
+		}
+		log.Printf("unexpected error while finding SL: %v", err)
+		return constants.ErrUnexpectedError
+	}
+
+	if targetSL.RowVersion != req.Version {
+		return constants.ErrVersionOutdated
+	}
+
+	if err := db.DB.Delete(&targetSL).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
