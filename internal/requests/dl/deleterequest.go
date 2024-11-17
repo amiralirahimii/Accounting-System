@@ -1,6 +1,6 @@
 package dl
 
 type DeleteRequest struct {
-	ID      uint
+	ID      int
 	Version int
 }

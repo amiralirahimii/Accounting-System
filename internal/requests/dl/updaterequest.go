@@ -1,7 +1,7 @@
 package dl
 
 type UpdateRequest struct {
-	ID      uint
+	ID      int
 	Code    string
 	Title   string
 	Version int
