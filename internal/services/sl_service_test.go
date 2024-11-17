@@ -360,3 +360,78 @@ func Test_UpdateSL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) 
 	assert.ErrorIs(t, err, constants.ErrTitleAlreadyExists)
 	assert.Nil(t, updatedSL)
 }
+
+func Test_DeleteSL_Succeeds_WithValidRequest(t *testing.T) {
+	service := SLService{}
+	createdSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	deleteReq := &sl.DeleteRequest{
+		ID:      createdSL.ID,
+		Version: createdSL.RowVersion,
+	}
+
+	err = service.DeleteSL(deleteReq)
+
+	require.Nil(t, err)
+}
+
+func Test_DeleteSL_ReturnsErrSLNotFound_WithNonExistingID(t *testing.T) {
+	service := SLService{}
+	deleteReq := &sl.DeleteRequest{
+		ID: generateRandomInt64(),
+	}
+
+	err := service.DeleteSL(deleteReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrSLNotFound)
+}
+
+func Test_DeleteSL_ReturnsErrSLNotFound_WithDeletedID(t *testing.T) {
+	service := SLService{}
+	createdSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	deleteReq := &sl.DeleteRequest{
+		ID:      createdSL.ID,
+		Version: createdSL.RowVersion,
+	}
+
+	err = service.DeleteSL(deleteReq)
+	require.Nil(t, err)
+
+	err = service.DeleteSL(deleteReq)
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrSLNotFound)
+}
+
+func Test_DeleteSL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
+	service := SLService{}
+	createdSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	newRandomCode := "SL" + generateRandomString(20)
+	newRandomTitle := "NewTitle" + generateRandomString(20)
+	newHasDL := !createdSL.HasDL
+	updateReq := &sl.UpdateRequest{
+		ID:      createdSL.ID,
+		Code:    newRandomCode,
+		Title:   newRandomTitle,
+		HasDL:   newHasDL,
+		Version: createdSL.RowVersion,
+	}
+
+	_, err = service.UpdateSL(updateReq)
+	require.Nil(t, err)
+
+	deleteReq := &sl.DeleteRequest{
+		ID:      createdSL.ID,
+		Version: createdSL.RowVersion,
+	}
+
+	err = service.DeleteSL(deleteReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrVersionOutdated)
+}
