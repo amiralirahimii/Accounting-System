@@ -190,9 +190,10 @@ func Test_UpdateDL_Succeeds_WithValidRequest(t *testing.T) {
 	newRandomCode := "DL" + generateRandomString(20)
 	newRandomTitle := "Test" + generateRandomString(20)
 	updateReq := &dl.UpdateRequest{
-		ID:    createdDL.ID,
-		Code:  newRandomCode,
-		Title: newRandomTitle,
+		ID:      createdDL.ID,
+		Code:    newRandomCode,
+		Title:   newRandomTitle,
+		Version: createdDL.RowVersion,
 	}
 
 	updatedDL, err := service.UpdateDL(updateReq)
@@ -208,9 +209,10 @@ func Test_UpdateDL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
 
 	newRandomTitle := "Test" + generateRandomString(20)
 	updateReq := &dl.UpdateRequest{
-		ID:    createdDL.ID,
-		Code:  "",
-		Title: newRandomTitle,
+		ID:      createdDL.ID,
+		Code:    "",
+		Title:   newRandomTitle,
+		Version: createdDL.RowVersion,
 	}
 
 	updatedDL, err := service.UpdateDL(updateReq)
@@ -227,9 +229,10 @@ func Test_UpdateDL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
 	newRandomCode := generateRandomString(65)
 	newRandomTitle := "Test" + generateRandomString(20)
 	updateReq := &dl.UpdateRequest{
-		ID:    createdDL.ID,
-		Code:  newRandomCode,
-		Title: newRandomTitle,
+		ID:      createdDL.ID,
+		Code:    newRandomCode,
+		Title:   newRandomTitle,
+		Version: createdDL.RowVersion,
 	}
 
 	updatedDL, err := service.UpdateDL(updateReq)
@@ -245,9 +248,10 @@ func Test_UpdateDL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
 
 	newRandomCode := "DL" + generateRandomString(20)
 	updateReq := &dl.UpdateRequest{
-		ID:    createdDL.ID,
-		Code:  newRandomCode,
-		Title: "",
+		ID:      createdDL.ID,
+		Code:    newRandomCode,
+		Title:   "",
+		Version: createdDL.RowVersion,
 	}
 
 	updatedDL, err := service.UpdateDL(updateReq)
@@ -264,9 +268,10 @@ func Test_UpdateDL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) 
 	newRandomCode := "DL" + generateRandomString(20)
 	newRandomTitle := generateRandomString(65)
 	updateReq := &dl.UpdateRequest{
-		ID:    createdDL.ID,
-		Code:  newRandomCode,
-		Title: newRandomTitle,
+		ID:      createdDL.ID,
+		Code:    newRandomCode,
+		Title:   newRandomTitle,
+		Version: createdDL.RowVersion,
 	}
 
 	updatedDL, err := service.UpdateDL(updateReq)
@@ -293,4 +298,148 @@ func Test_UpdateDL_ReturnsErrDLNotFound_WithNonExistingID(t *testing.T) {
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrDLNotFound)
 	assert.Nil(t, updatedDL)
+}
+
+func Test_UpdateDL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
+	service := DLService{}
+	createdDL, _ := createRandomDL(&service)
+
+	newRandomCode := "DL" + generateRandomString(20)
+	newRandomTitle := "Test" + generateRandomString(20)
+	updateReq := &dl.UpdateRequest{
+		ID:      createdDL.ID,
+		Code:    newRandomCode,
+		Title:   newRandomTitle,
+		Version: createdDL.RowVersion,
+	}
+
+	newRandomCode2 := "DL" + generateRandomString(20)
+	newRandomTitle2 := "Test" + generateRandomString(20)
+	updateReqWithOutdatedVersion := &dl.UpdateRequest{
+		ID:      createdDL.ID,
+		Code:    newRandomCode2,
+		Title:   newRandomTitle2,
+		Version: createdDL.RowVersion,
+	}
+
+	_, err := service.UpdateDL(updateReq)
+	require.Nil(t, err)
+
+	updatedDL, err := service.UpdateDL(updateReqWithOutdatedVersion)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrVersionOutdated)
+	assert.Nil(t, updatedDL)
+}
+
+func Test_UpdateDL_ReturnsErrCodeAlreadyExists_WithExistingCode(t *testing.T) {
+	service := DLService{}
+	createdDL1, _ := createRandomDL(&service)
+	createdDL2, _ := createRandomDL(&service)
+
+	newRandomTitle := "Test" + generateRandomString(20)
+	updateReq := &dl.UpdateRequest{
+		ID:      createdDL1.ID,
+		Code:    createdDL2.Code,
+		Title:   newRandomTitle,
+		Version: createdDL1.RowVersion,
+	}
+
+	updatedDL, err := service.UpdateDL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrCodeAlreadyExists)
+	assert.Nil(t, updatedDL)
+}
+
+func Test_UpdateDL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) {
+	service := DLService{}
+	createdDL1, _ := createRandomDL(&service)
+	createdDL2, _ := createRandomDL(&service)
+
+	newRandomCode := "DL" + generateRandomString(20)
+	updateReq := &dl.UpdateRequest{
+		ID:      createdDL1.ID,
+		Code:    newRandomCode,
+		Title:   createdDL2.Title,
+		Version: createdDL1.RowVersion,
+	}
+
+	updatedDL, err := service.UpdateDL(updateReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrTitleAlreadyExists)
+	assert.Nil(t, updatedDL)
+}
+
+func Test_DeleteDL_Succeeds_WithValidID(t *testing.T) {
+	service := DLService{}
+	createdDL, _ := createRandomDL(&service)
+
+	deleteReq := &dl.DeleteRequest{
+		ID: createdDL.ID,
+	}
+
+	err := service.DeleteDL(deleteReq)
+
+	require.Nil(t, err)
+}
+
+func Test_DeleteDL_ReturnsErrDLNotFound_WithNonExistingID(t *testing.T) {
+	service := DLService{}
+	newID := generateRandomInt64()
+
+	deleteReq := &dl.DeleteRequest{
+		ID: newID,
+	}
+
+	err := service.DeleteDL(deleteReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrDLNotFound)
+}
+
+func Test_DeleteDL_ReturnsErrDLNotFound_WithDeletedID(t *testing.T) {
+	service := DLService{}
+	createdDL, _ := createRandomDL(&service)
+
+	deleteReq := &dl.DeleteRequest{
+		ID: createdDL.ID,
+	}
+
+	err := service.DeleteDL(deleteReq)
+
+	require.Nil(t, err)
+
+	err = service.DeleteDL(deleteReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrDLNotFound)
+}
+
+func Test_DeleteDL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
+	service := DLService{}
+	createdDL, _ := createRandomDL(&service)
+
+	newRandomCode := "DL" + generateRandomString(20)
+	newRandomTitle := "Test" + generateRandomString(20)
+	updateReq := &dl.UpdateRequest{
+		ID:      createdDL.ID,
+		Code:    newRandomCode,
+		Title:   newRandomTitle,
+		Version: createdDL.RowVersion,
+	}
+
+	_, err := service.UpdateDL(updateReq)
+	require.Nil(t, err)
+
+	deleteReq := &dl.DeleteRequest{
+		ID:      createdDL.ID,
+		Version: createdDL.RowVersion,
+	}
+
+	err = service.DeleteDL(deleteReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrVersionOutdated)
 }
