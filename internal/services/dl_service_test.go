@@ -446,4 +446,34 @@ func Test_DeleteDL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 	assert.ErrorIs(t, err, constants.ErrVersionOutdated)
 }
 
+func Test_GetDLByID_Succeeds_WithValidID(t *testing.T) {
+	service := DLService{}
+	createdDL, _ := createRandomDL(&service)
 
+	getReq := &dl.GetRequest{
+		ID: createdDL.ID,
+	}
+
+	foundDL, err := service.GetDL(getReq)
+
+	require.Nil(t, err)
+	assert.Equal(t, createdDL.ID, foundDL.ID)
+	assert.Equal(t, createdDL.Code, foundDL.Code)
+	assert.Equal(t, createdDL.Title, foundDL.Title)
+	assert.Equal(t, createdDL.RowVersion, foundDL.RowVersion)
+}
+
+func Test_GetDLByID_ReturnsErrDLNotFound_WithNonExistingID(t *testing.T) {
+	service := DLService{}
+	newID := generateRandomInt64()
+
+	getReq := &dl.GetRequest{
+		ID: newID,
+	}
+
+	foundDL, err := service.GetDL(getReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrDLNotFound)
+	assert.Nil(t, foundDL)
+}
