@@ -4,6 +4,8 @@ import (
 	"accountingsystem/internal/constants"
 	"accountingsystem/internal/models"
 	"accountingsystem/internal/requests/dl"
+	"accountingsystem/internal/requests/sl"
+	"accountingsystem/internal/requests/voucher"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -409,6 +411,51 @@ func Test_DeleteDL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrVersionOutdated)
+}
+
+func Test_DeleteDL_ReturnsErrThereIsRefrenceToDL_WithExistingReference(t *testing.T) {
+	slService := SLService{}
+	slWithDL, err := slService.CreateSL(&sl.InsertRequest{
+		Code:  "SL" + generateRandomString(20),
+		Title: "SLWithDL" + generateRandomString(20),
+		HasDL: true,
+	})
+	require.Nil(t, err)
+
+	service := DLService{}
+	createdDL, err := createRandomDL(&service)
+	require.Nil(t, err)
+
+	voucherService := VoucherService{}
+	items := []voucher.VoucherItemInsertRequest{
+		{
+			SLID:   slWithDL.ID,
+			DLID:   &createdDL.ID,
+			Debit:  100,
+			Credit: 0,
+		},
+		{
+			SLID:   slWithDL.ID,
+			DLID:   &createdDL.ID,
+			Debit:  0,
+			Credit: 100,
+		},
+	}
+	req := &voucher.InsertRequest{
+		Number:       generateRandomString(20),
+		VoucherItems: items,
+	}
+	_, err = voucherService.CreateVoucher(req)
+	require.Nil(t, err)
+
+	deleteReq := &dl.DeleteRequest{
+		ID:      createdDL.ID,
+		Version: createdDL.RowVersion,
+	}
+	err = service.DeleteDL(deleteReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrThereIsRefrenceToDL)
 }
 
 func Test_GetDLByID_Succeeds_WithValidID(t *testing.T) {
