@@ -158,7 +158,7 @@ func Test_CreateVoucher_ReturnsErrDebitOrCreditInvalid_BothDebitAndCreditNonZero
 			SLID:   2,
 			DLID:   nil,
 			Debit:  0,
-			Credit: 100,
+			Credit: 50,
 		},
 	}
 
@@ -186,6 +186,12 @@ func Test_CreateVoucher_ReturnsErrDebitOrCreditInvalid_BothDebitAndCreditZero(t 
 			DLID:   nil,
 			Debit:  0,
 			Credit: 100,
+		},
+		{
+			SLID:   3,
+			DLID:   nil,
+			Debit:  100,
+			Credit: 0,
 		},
 	}
 
@@ -407,3 +413,4 @@ func Test_CreateVoucher_ReturnsErrDLNotFound_WithInvalidDLID(t *testing.T) {
 	assert.ErrorIs(t, err, constants.ErrDLNotFound)
 	assert.Nil(t, voucher)
 }
+
