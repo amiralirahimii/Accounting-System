@@ -501,3 +501,45 @@ func Test_GetSL_ReturnsErrSLNotFound_WithNonExistingID(t *testing.T) {
 	assert.ErrorIs(t, err, constants.ErrSLNotFound)
 	assert.Nil(t, sl)
 }
+
+func Test_DeleteSL_ReturnsErrThereIsReferenceToSL_WithReferencedSL(t *testing.T) {
+	slService := SLService{}
+	createdSL, err := createRandomSL(&slService, true)
+	require.Nil(t, err)
+
+	dlService := DLService{}
+	createdDL, err := createRandomDL(&dlService)
+	require.Nil(t, err)
+
+	voucherService := VoucherService{}
+	voucherItems := []voucher.VoucherItemInsertRequest{
+		{
+			SLID:   createdSL.ID,
+			DLID:   &createdDL.ID,
+			Debit:  100,
+			Credit: 0,
+		},
+		{
+			SLID:   createdSL.ID,
+			DLID:   &createdDL.ID,
+			Debit:  0,
+			Credit: 100,
+		},
+	}
+	voucherReq := &voucher.InsertRequest{
+		Number:       generateRandomString(20),
+		VoucherItems: voucherItems,
+	}
+	_, err = voucherService.CreateVoucher(voucherReq)
+	require.Nil(t, err)
+
+	deleteReq := &sl.DeleteRequest{
+		ID:      createdSL.ID,
+		Version: createdSL.RowVersion,
+	}
+
+	err = slService.DeleteSL(deleteReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrThereIsRefrenceToSL)
+}
