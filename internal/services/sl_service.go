@@ -48,7 +48,6 @@ func (s *SLService) CreateSL(req *sl.InsertRequest) (*models.SL, error) {
 	return &sl, nil
 }
 
-// TODO check for any refrences here before updating
 func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*models.SL, error) {
 	if req.Code == "" || len(req.Code) > 64 {
 		return nil, constants.ErrCodeEmptyOrTooLong
@@ -68,6 +67,11 @@ func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*models.SL, error) {
 
 	if targetSL.RowVersion != req.Version {
 		return nil, constants.ErrVersionOutdated
+	}
+
+	var VoucherItemRefrencingThisSL models.VoucherItem
+	if err := db.DB.Where("sl_id = ?", targetSL.ID).First(&VoucherItemRefrencingThisSL).Error; err == nil {
+		return nil, constants.ErrThereIsRefrenceToSL
 	}
 
 	var existingSL models.SL
