@@ -93,8 +93,8 @@ func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*models.DL, error) {
 
 // TODO check for any refrences here before deleting
 func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
-	var targerDL models.DL
-	if err := db.DB.Where("id = ?", req.ID).First(&targerDL).Error; err != nil {
+	var targetDL models.DL
+	if err := db.DB.Where("id = ?", req.ID).First(&targetDL).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return constants.ErrDLNotFound
 		}
@@ -102,11 +102,11 @@ func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
 		return constants.ErrUnexpectedError
 	}
 
-	if targerDL.RowVersion != req.Version {
+	if targetDL.RowVersion != req.Version {
 		return constants.ErrVersionOutdated
 	}
 
-	if err := db.DB.Delete(&targerDL).Error; err != nil {
+	if err := db.DB.Delete(&targetDL).Error; err != nil {
 		log.Printf("unexpected error while deleting DL: %v", err)
 		return constants.ErrUnexpectedError
 	}
@@ -115,8 +115,8 @@ func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
 }
 
 func (s *DLService) GetDL(req *dl.GetRequest) (*models.DL, error) {
-	var targerDL models.DL
-	if err := db.DB.Where("id = ?", req.ID).First(&targerDL).Error; err != nil {
+	var targetDL models.DL
+	if err := db.DB.Where("id = ?", req.ID).First(&targetDL).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, constants.ErrDLNotFound
 		}
@@ -124,5 +124,5 @@ func (s *DLService) GetDL(req *dl.GetRequest) (*models.DL, error) {
 		return nil, constants.ErrUnexpectedError
 	}
 
-	return &targerDL, nil
+	return &targetDL, nil
 }
