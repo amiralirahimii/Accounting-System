@@ -3,7 +3,7 @@ package constants
 import "errors"
 
 var (
-	ErrUnexpectedError             = errors.New("Something went wrong")
+	ErrUnexpectedError             = errors.New("something went wrong")
 	ErrEnvNotFound                 = errors.New("environment variable not found")
 	ErrCodeEmptyOrTooLong          = errors.New("code cannot be empty or more than 64 characters")
 	ErrTitleEmptyOrTooLong         = errors.New("title cannot be empty or more than 64 characters")
@@ -16,8 +16,9 @@ var (
 	ErrVoucherNumberExists         = errors.New("voucher number already exists")
 	ErrVoucherItemsCountOutOfRange = errors.New("voucher items count should be between 2 and 500")
 	ErrDebitOrCreditInvalid        = errors.New("one and only one of debit or credit should be greater than 0")
-	ErrDLIDRequired                = errors.New("Provided SL requires DL")
-	ErrDLNotAllowed                = errors.New("Provided SL does not require DL")
+	ErrDLIDRequired                = errors.New("provided SL requires DL")
+	ErrDLNotAllowed                = errors.New("provided SL does not require DL")
 	ErrDebitCreditMismatch         = errors.New("debits ad credits should be equal in a voucher")
 	ErrThereIsRefrenceToDL         = errors.New("there is refrence to this DL")
+	ErrThereIsRefrenceToSL         = errors.New("there is refrence to this SL")
 )
