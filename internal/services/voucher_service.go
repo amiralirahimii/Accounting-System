@@ -62,7 +62,7 @@ func (s *VoucherService) validateVoucherRequest(req *voucher.InsertRequest) erro
 	return nil
 }
 
-func (s *VoucherService) validateVoucherItems(items []voucher.VoucherItemInsertRequest) error {
+func (s *VoucherService) validateVoucherItems(items []voucher.VoucherItemInsertDetail) error {
 	totalDebit := 0
 	totalCredit := 0
 
@@ -82,7 +82,7 @@ func (s *VoucherService) validateVoucherItems(items []voucher.VoucherItemInsertR
 	return nil
 }
 
-func (s *VoucherService) validateDebitCredit(item voucher.VoucherItemInsertRequest) error {
+func (s *VoucherService) validateDebitCredit(item voucher.VoucherItemInsertDetail) error {
 	isValidDebitCredit := (item.Debit == 0 && item.Credit > 0) || (item.Debit > 0 && item.Credit == 0)
 	if !isValidDebitCredit {
 		return constants.ErrDebitOrCreditInvalid
@@ -113,7 +113,7 @@ func (s *VoucherService) insertVoucher(tx *gorm.DB, number string) (*models.Vouc
 	return voucher, nil
 }
 
-func (s *VoucherService) insertVoucherItems(tx *gorm.DB, voucherID int, items []voucher.VoucherItemInsertRequest) error {
+func (s *VoucherService) insertVoucherItems(tx *gorm.DB, voucherID int, items []voucher.VoucherItemInsertDetail) error {
 	for _, item := range items {
 		if err := s.validateSLAndDL(tx, item); err != nil {
 			return err
@@ -125,7 +125,7 @@ func (s *VoucherService) insertVoucherItems(tx *gorm.DB, voucherID int, items []
 	return nil
 }
 
-func (s *VoucherService) createVoucherItem(tx *gorm.DB, voucherID int, item voucher.VoucherItemInsertRequest) error {
+func (s *VoucherService) createVoucherItem(tx *gorm.DB, voucherID int, item voucher.VoucherItemInsertDetail) error {
 	dlID := s.convertToNullInt64(item.DLID)
 
 	voucherItem := models.VoucherItem{
@@ -150,7 +150,7 @@ func (s *VoucherService) convertToNullInt64(num *int) sql.NullInt64 {
 	return sql.NullInt64{Int64: int64(*num), Valid: true}
 }
 
-func (s *VoucherService) validateSLAndDL(tx *gorm.DB, item voucher.VoucherItemInsertRequest) error {
+func (s *VoucherService) validateSLAndDL(tx *gorm.DB, item voucher.VoucherItemInsertDetail) error {
 	var sl models.SL
 	if err := tx.First(&sl, item.SLID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

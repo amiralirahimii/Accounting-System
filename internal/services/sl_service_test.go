@@ -360,7 +360,7 @@ func Test_UpdateSL_ReturnsErrThereIsReferenceToSL_WithReferencedSL(t *testing.T)
 	require.Nil(t, err)
 
 	voucherService := VoucherService{}
-	voucherItems := []voucher.VoucherItemInsertRequest{
+	voucherItems := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   createdSL.ID,
 			DLID:   &createdDL.ID,
@@ -512,7 +512,7 @@ func Test_DeleteSL_ReturnsErrThereIsReferenceToSL_WithReferencedSL(t *testing.T)
 	require.Nil(t, err)
 
 	voucherService := VoucherService{}
-	voucherItems := []voucher.VoucherItemInsertRequest{
+	voucherItems := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   createdSL.ID,
 			DLID:   &createdDL.ID,

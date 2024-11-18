@@ -23,7 +23,7 @@ func Test_CreateVoucher_Succeeds_ReferencingDLAndNonReferencingDLVoucherItems(t 
 	dl, err := createRandomDL(&dlService)
 	require.Nil(t, err)
 
-	items := []voucher.VoucherItemInsertRequest{
+	items := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   slWithDL.ID,
 			DLID:   &dl.ID,
@@ -50,7 +50,7 @@ func Test_CreateVoucher_Succeeds_ReferencingDLAndNonReferencingDLVoucherItems(t 
 }
 
 func Test_CreateVoucher_ReturnsErrNumberEmptyOrTooLong_WithTooShortNumber(t *testing.T) {
-	items := []voucher.VoucherItemInsertRequest{
+	items := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   1,
 			DLID:   nil,
@@ -77,7 +77,7 @@ func Test_CreateVoucher_ReturnsErrNumberEmptyOrTooLong_WithTooShortNumber(t *tes
 }
 
 func Test_CreateVoucher_ReturnsErrNumberEmptyOrTooLong_WithTooLongNumber(t *testing.T) {
-	items := []voucher.VoucherItemInsertRequest{
+	items := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   1,
 			DLID:   nil,
@@ -104,7 +104,7 @@ func Test_CreateVoucher_ReturnsErrNumberEmptyOrTooLong_WithTooLongNumber(t *test
 }
 
 func Test_CreateVoucher_ReturnsErrVoucherItemsCountOutOfRange_WithLessThanTwoVoucherItems(t *testing.T) {
-	items := []voucher.VoucherItemInsertRequest{
+	items := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   1,
 			DLID:   nil,
@@ -125,9 +125,9 @@ func Test_CreateVoucher_ReturnsErrVoucherItemsCountOutOfRange_WithLessThanTwoVou
 }
 
 func Test_CreateVoucher_ReturnsErrVoucherItemsCountOutOfRange_WithMoreThan500VoucherItems(t *testing.T) {
-	var items []voucher.VoucherItemInsertRequest
+	var items []voucher.VoucherItemInsertDetail
 	for i := 0; i < 501; i++ {
-		items = append(items, voucher.VoucherItemInsertRequest{
+		items = append(items, voucher.VoucherItemInsertDetail{
 			SLID:   1,
 			DLID:   nil,
 			Debit:  100,
@@ -147,7 +147,7 @@ func Test_CreateVoucher_ReturnsErrVoucherItemsCountOutOfRange_WithMoreThan500Vou
 }
 
 func Test_CreateVoucher_ReturnsErrDebitOrCreditInvalid_BothDebitAndCreditNonZero(t *testing.T) {
-	items := []voucher.VoucherItemInsertRequest{
+	items := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   1,
 			DLID:   nil,
@@ -174,7 +174,7 @@ func Test_CreateVoucher_ReturnsErrDebitOrCreditInvalid_BothDebitAndCreditNonZero
 }
 
 func Test_CreateVoucher_ReturnsErrDebitOrCreditInvalid_BothDebitAndCreditZero(t *testing.T) {
-	items := []voucher.VoucherItemInsertRequest{
+	items := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   1,
 			DLID:   nil,
@@ -201,7 +201,7 @@ func Test_CreateVoucher_ReturnsErrDebitOrCreditInvalid_BothDebitAndCreditZero(t 
 }
 
 func Test_CreateVoucher_ReturnsErrDebitCreditMismatch_WithMismatchedDebitCreditSum(t *testing.T) {
-	items := []voucher.VoucherItemInsertRequest{
+	items := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   1,
 			DLID:   nil,
@@ -237,7 +237,7 @@ func Test_CreateVoucher_ReturnsErrVoucherNumberExists_WithExistingVoucherNumber(
 	dl, err := createRandomDL(&dlService)
 	require.Nil(t, err)
 
-	initialItems := []voucher.VoucherItemInsertRequest{
+	initialItems := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   slWithDL.ID,
 			DLID:   &dl.ID,
@@ -260,7 +260,7 @@ func Test_CreateVoucher_ReturnsErrVoucherNumberExists_WithExistingVoucherNumber(
 	_, err = voucherService.CreateVoucher(initialReq)
 	require.Nil(t, err)
 
-	newItems := []voucher.VoucherItemInsertRequest{
+	newItems := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   1,
 			DLID:   nil,
@@ -287,7 +287,7 @@ func Test_CreateVoucher_ReturnsErrVoucherNumberExists_WithExistingVoucherNumber(
 }
 
 func Test_CreateVoucher_ReturnsErrSLNotFound_WithInvalidSLID(t *testing.T) {
-	items := []voucher.VoucherItemInsertRequest{
+	items := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   generateRandomInt64(),
 			DLID:   nil,
@@ -317,7 +317,7 @@ func Test_CreateVoucher_ReturnsErrDLIDRequired_WhenSLRequiresDLButNoDLProvided(t
 	slWithDL, err := createRandomSL(&slService, true)
 	require.Nil(t, err)
 
-	items := []voucher.VoucherItemInsertRequest{
+	items := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   slWithDL.ID,
 			DLID:   nil,
@@ -350,7 +350,7 @@ func Test_CreateVoucher_ReturnsErrDLNotAllowed_WhenSLDoesNotRequireDLButDLProvid
 	dl, err := createRandomDL(&dlService)
 	require.Nil(t, err)
 
-	items := []voucher.VoucherItemInsertRequest{
+	items := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   slWithoutDL.ID,
 			DLID:   &dl.ID,
@@ -382,7 +382,7 @@ func Test_CreateVoucher_ReturnsErrDLNotFound_WithInvalidDLID(t *testing.T) {
 
 	invalidDLID := generateRandomInt64()
 
-	items := []voucher.VoucherItemInsertRequest{
+	items := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   slWithDL.ID,
 			DLID:   &invalidDLID,

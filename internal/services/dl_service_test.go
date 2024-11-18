@@ -415,7 +415,7 @@ func Test_DeleteDL_ReturnsErrThereIsRefrenceToDL_WithExistingReference(t *testin
 	require.Nil(t, err)
 
 	voucherService := VoucherService{}
-	items := []voucher.VoucherItemInsertRequest{
+	items := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   slWithDL.ID,
 			DLID:   &createdDL.ID,
