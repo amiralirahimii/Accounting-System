@@ -91,7 +91,6 @@ func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*models.DL, error) {
 	return &targetDL, nil
 }
 
-// TODO check for any refrences here before deleting
 func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
 	var targetDL models.DL
 	if err := db.DB.Where("id = ?", req.ID).First(&targetDL).Error; err != nil {
@@ -104,6 +103,11 @@ func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
 
 	if targetDL.RowVersion != req.Version {
 		return constants.ErrVersionOutdated
+	}
+
+	var VoucherItemRefrencingThisDL models.VoucherItem
+	if err := db.DB.Where("dl_id = ?", targetDL.ID).First(&VoucherItemRefrencingThisDL).Error; err == nil {
+		return constants.ErrThereIsRefrenceToDL
 	}
 
 	if err := db.DB.Delete(&targetDL).Error; err != nil {

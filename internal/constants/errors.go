@@ -19,4 +19,5 @@ var (
 	ErrDLIDRequired                = errors.New("Provided SL requires DL")
 	ErrDLNotAllowed                = errors.New("Provided SL does not require DL")
 	ErrDebitCreditMismatch         = errors.New("debits ad credits should be equal in a voucher")
+	ErrThereIsRefrenceToDL         = errors.New("there is refrence to this DL")
 )
