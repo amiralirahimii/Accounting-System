@@ -99,7 +99,6 @@ func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*models.SL, error) {
 	return &targetSL, nil
 }
 
-// TODO check for any refrences here before deleting
 func (s *SLService) DeleteSL(req *sl.DeleteRequest) error {
 	var targetSL models.SL
 	if err := db.DB.Where("id = ?", req.ID).First(&targetSL).Error; err != nil {
@@ -112,6 +111,11 @@ func (s *SLService) DeleteSL(req *sl.DeleteRequest) error {
 
 	if targetSL.RowVersion != req.Version {
 		return constants.ErrVersionOutdated
+	}
+
+	var VoucherItemRefrencingThisSL models.VoucherItem
+	if err := db.DB.Where("sl_id = ?", targetSL.ID).First(&VoucherItemRefrencingThisSL).Error; err == nil {
+		return constants.ErrThereIsRefrenceToSL
 	}
 
 	if err := db.DB.Delete(&targetSL).Error; err != nil {
