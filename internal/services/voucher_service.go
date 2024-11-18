@@ -56,6 +56,37 @@ func (s *VoucherService) validateVoucherRequest(req *voucher.InsertRequest) erro
 	if len(req.VoucherItems) < 2 || len(req.VoucherItems) > 500 {
 		return constants.ErrVoucherItemsCountOutOfRange
 	}
+	if err := s.validateVoucherItems(req.VoucherItems); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *VoucherService) validateVoucherItems(items []voucher.VoucherItemInsertRequest) error {
+	totalDebit := 0
+	totalCredit := 0
+
+	for _, item := range items {
+		if err := s.validateDebitCredit(item); err != nil {
+			return err
+		}
+
+		totalDebit += item.Debit
+		totalCredit += item.Credit
+	}
+
+	if totalDebit != totalCredit {
+		return constants.ErrDebitCreditMismatch
+	}
+
+	return nil
+}
+
+func (s *VoucherService) validateDebitCredit(item voucher.VoucherItemInsertRequest) error {
+	isValidDebitCredit := (item.Debit == 0 && item.Credit > 0) || (item.Debit > 0 && item.Credit == 0)
+	if !isValidDebitCredit {
+		return constants.ErrDebitOrCreditInvalid
+	}
 	return nil
 }
 
@@ -84,9 +115,6 @@ func (s *VoucherService) insertVoucher(tx *gorm.DB, number string) (*models.Vouc
 
 func (s *VoucherService) insertVoucherItems(tx *gorm.DB, voucherID int, items []voucher.VoucherItemInsertRequest) error {
 	for _, item := range items {
-		if err := s.validateDebitCredit(item); err != nil {
-			return err
-		}
 		if err := s.validateSLAndDL(tx, item); err != nil {
 			return err
 		}
@@ -97,24 +125,15 @@ func (s *VoucherService) insertVoucherItems(tx *gorm.DB, voucherID int, items []
 	return nil
 }
 
-func (s *VoucherService) validateDebitCredit(item voucher.VoucherItemInsertRequest) error {
-	isValidDebitCredit := (item.Debit == 0 && item.Credit > 0) || (item.Debit > 0 && item.Credit == 0)
-	if !isValidDebitCredit {
-		return constants.ErrDebitOrCreditInvalid
-	}
-	return nil
-}
-
 func (s *VoucherService) createVoucherItem(tx *gorm.DB, voucherID int, item voucher.VoucherItemInsertRequest) error {
 	dlID := s.convertToNullInt64(item.DLID)
 
 	voucherItem := models.VoucherItem{
-		VoucherID:  voucherID,
-		SLID:       item.SLID,
-		DLID:       dlID,
-		Debit:      item.Debit,
-		Credit:     item.Credit,
-		RowVersion: 0,
+		VoucherID: voucherID,
+		SLID:      item.SLID,
+		DLID:      dlID,
+		Debit:     item.Debit,
+		Credit:    item.Credit,
 	}
 
 	if err := tx.Create(&voucherItem).Error; err != nil {
@@ -160,4 +179,3 @@ func (s *VoucherService) validateSLAndDL(tx *gorm.DB, item voucher.VoucherItemIn
 
 	return nil
 }
-
