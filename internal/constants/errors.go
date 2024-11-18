@@ -21,4 +21,6 @@ var (
 	ErrDebitCreditMismatch         = errors.New("debits ad credits should be equal in a voucher")
 	ErrThereIsRefrenceToDL         = errors.New("there is refrence to this DL")
 	ErrThereIsRefrenceToSL         = errors.New("there is refrence to this SL")
+	ErrVoucherItemNotFound         = errors.New("voucher item not found")
+	ErrVoucherNotFound             = errors.New("voucher not found")
 )
