@@ -2,7 +2,6 @@ package services
 
 import (
 	"accountingsystem/internal/constants"
-	"accountingsystem/internal/models"
 	"accountingsystem/internal/requests/dl"
 	"accountingsystem/internal/requests/sl"
 	"accountingsystem/internal/requests/voucher"
@@ -136,17 +135,6 @@ func Test_CreateDL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleAlreadyExists)
 	assert.Nil(t, dl)
-}
-
-func createRandomDL(s *DLService) (*models.DL, error) {
-	randomCode := "DL" + generateRandomString(20)
-	randomTitle := "Test" + generateRandomString(20)
-	req := &dl.InsertRequest{
-		Code:  randomCode,
-		Title: randomTitle,
-	}
-	createDL, err := s.CreateDL(req)
-	return createDL, err
 }
 
 func Test_UpdateDL_Succeeds_WithValidRequest(t *testing.T) {

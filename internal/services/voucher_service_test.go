@@ -2,9 +2,6 @@ package services
 
 import (
 	"accountingsystem/internal/constants"
-	"accountingsystem/internal/models"
-	"accountingsystem/internal/requests/dl"
-	"accountingsystem/internal/requests/sl"
 	"accountingsystem/internal/requests/voucher"
 	"testing"
 
@@ -13,32 +10,17 @@ import (
 )
 
 var voucherService = VoucherService{}
-
-func createRandomSLInDB(hasDL bool) (*models.SL, error) {
-	slService := SLService{}
-	return slService.CreateSL(&sl.InsertRequest{
-		Code:  "SL" + generateRandomString(20),
-		Title: "Title" + generateRandomString(20),
-		HasDL: hasDL,
-	})
-}
-
-func createRandomDLInDB() (*models.DL, error) {
-	dlService := DLService{}
-	return dlService.CreateDL(&dl.InsertRequest{
-		Code:  "DL" + generateRandomString(20),
-		Title: "Title" + generateRandomString(20),
-	})
-}
+var slService = SLService{}
+var dlService = DLService{}
 
 func Test_CreateVoucher_Succeeds_ReferencingDLAndNonReferencingDLVoucherItems(t *testing.T) {
-	slWithDL, err := createRandomSLInDB(true)
+	slWithDL, err := createRandomSL(&slService, true)
 	require.Nil(t, err)
 
-	slWithoutDL, err := createRandomSLInDB(false)
+	slWithoutDL, err := createRandomSL(&slService, false)
 	require.Nil(t, err)
 
-	dl, err := createRandomDLInDB()
+	dl, err := createRandomDL(&dlService)
 	require.Nil(t, err)
 
 	items := []voucher.VoucherItemInsertRequest{
@@ -246,13 +228,13 @@ func Test_CreateVoucher_ReturnsErrDebitCreditMismatch_WithMismatchedDebitCreditS
 }
 
 func Test_CreateVoucher_ReturnsErrVoucherNumberExists_WithExistingVoucherNumber(t *testing.T) {
-	slWithDL, err := createRandomSLInDB(true)
+	slWithDL, err := createRandomSL(&slService, true)
 	require.Nil(t, err)
 
-	slWithoutDL, err := createRandomSLInDB(false)
+	slWithoutDL, err := createRandomSL(&slService, false)
 	require.Nil(t, err)
 
-	dl, err := createRandomDLInDB()
+	dl, err := createRandomDL(&dlService)
 	require.Nil(t, err)
 
 	initialItems := []voucher.VoucherItemInsertRequest{
@@ -332,7 +314,7 @@ func Test_CreateVoucher_ReturnsErrSLNotFound_WithInvalidSLID(t *testing.T) {
 }
 
 func Test_CreateVoucher_ReturnsErrDLIDRequired_WhenSLRequiresDLButNoDLProvided(t *testing.T) {
-	slWithDL, err := createRandomSLInDB(true)
+	slWithDL, err := createRandomSL(&slService, true)
 	require.Nil(t, err)
 
 	items := []voucher.VoucherItemInsertRequest{
@@ -362,10 +344,10 @@ func Test_CreateVoucher_ReturnsErrDLIDRequired_WhenSLRequiresDLButNoDLProvided(t
 }
 
 func Test_CreateVoucher_ReturnsErrDLNotAllowed_WhenSLDoesNotRequireDLButDLProvided(t *testing.T) {
-	slWithoutDL, err := createRandomSLInDB(false)
+	slWithoutDL, err := createRandomSL(&slService, false)
 	require.Nil(t, err)
 
-	dl, err := createRandomDLInDB()
+	dl, err := createRandomDL(&dlService)
 	require.Nil(t, err)
 
 	items := []voucher.VoucherItemInsertRequest{
@@ -395,7 +377,7 @@ func Test_CreateVoucher_ReturnsErrDLNotAllowed_WhenSLDoesNotRequireDLButDLProvid
 }
 
 func Test_CreateVoucher_ReturnsErrDLNotFound_WithInvalidDLID(t *testing.T) {
-	slWithDL, err := createRandomSLInDB(true)
+	slWithDL, err := createRandomSL(&slService, true)
 	require.Nil(t, err)
 
 	invalidDLID := generateRandomInt64()

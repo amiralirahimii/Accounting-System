@@ -3,6 +3,9 @@ package services
 import (
 	"accountingsystem/config"
 	"accountingsystem/db"
+	"accountingsystem/internal/models"
+	"accountingsystem/internal/requests/dl"
+	"accountingsystem/internal/requests/sl"
 	"log"
 	"math/rand"
 	"os"
@@ -37,4 +40,26 @@ func generateRandomString(length int) string {
 
 func generateRandomInt64() int {
 	return int(seededRand.Uint64() & 0x7FFFFFFFFFFFFFFF)
+}
+
+func createRandomSL(s *SLService, hasDL bool) (*models.SL, error) {
+	randomCode := "SL" + generateRandomString(20)
+	randomTitle := "Test" + generateRandomString(20)
+	req := &sl.InsertRequest{
+		Code:  randomCode,
+		Title: randomTitle,
+		HasDL: hasDL,
+	}
+	return s.CreateSL(req)
+}
+
+func createRandomDL(s *DLService) (*models.DL, error) {
+	randomCode := "DL" + generateRandomString(20)
+	randomTitle := "Test" + generateRandomString(20)
+	req := &dl.InsertRequest{
+		Code:  randomCode,
+		Title: randomTitle,
+	}
+	createDL, err := s.CreateDL(req)
+	return createDL, err
 }
