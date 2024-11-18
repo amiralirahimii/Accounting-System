@@ -116,3 +116,16 @@ func (s *SLService) DeleteSL(req *sl.DeleteRequest) error {
 
 	return nil
 }
+
+func (s *SLService) GetSL(req *sl.GetRequest) (*models.SL, error) {
+	var sl models.SL
+	if err := db.DB.Where("id = ?", req.ID).First(&sl).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, constants.ErrSLNotFound
+		}
+		log.Printf("unexpected error while finding SL: %v", err)
+		return nil, constants.ErrUnexpectedError
+	}
+
+	return &sl, nil
+}
