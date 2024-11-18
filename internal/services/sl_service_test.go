@@ -435,3 +435,34 @@ func Test_DeleteSL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrVersionOutdated)
 }
+
+func Test_GetSL_Succeeds_WithValidID(t *testing.T) {
+	service := SLService{}
+	createdSL, err := createRandomSL(&service)
+	require.Nil(t, err)
+
+	getReq := &sl.GetRequest{
+		ID: createdSL.ID,
+	}
+
+	sl, err := service.GetSL(getReq)
+
+	require.Nil(t, err)
+	assert.Equal(t, sl.ID, createdSL.ID)
+	assert.Equal(t, sl.Code, createdSL.Code)
+	assert.Equal(t, sl.Title, createdSL.Title)
+	assert.Equal(t, sl.HasDL, createdSL.HasDL)
+}
+
+func Test_GetSL_ReturnsErrSLNotFound_WithNonExistingID(t *testing.T) {
+	service := SLService{}
+	getReq := &sl.GetRequest{
+		ID: generateRandomInt64(),
+	}
+
+	sl, err := service.GetSL(getReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrSLNotFound)
+	assert.Nil(t, sl)
+}
