@@ -15,7 +15,7 @@ var (
 	ErrNumberEmptyOrTooLong        = errors.New("number cannot be empty or more than 64 characters")
 	ErrVoucherNumberExists         = errors.New("voucher number already exists")
 	ErrVoucherItemsCountOutOfRange = errors.New("voucher items count should be between 2 and 500")
-	ErrDebitOrCreditInvalid        = errors.New("only one of debit or credit should be greater than 0")
+	ErrDebitOrCreditInvalid        = errors.New("one and only one of debit or credit should be greater than 0")
 	ErrDLIDRequired                = errors.New("Provided SL requires DL")
 	ErrDLNotAllowed                = errors.New("Provided SL does not require DL")
 	ErrDebitCreditMismatch         = errors.New("debits ad credits should be equal in a voucher")
