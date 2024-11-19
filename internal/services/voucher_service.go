@@ -304,11 +304,11 @@ func (s *VoucherService) validateUpdateVoucherRequest(tx *gorm.DB, req *voucher.
 	if req.Number == "" || len(req.Number) > 64 {
 		return constants.ErrNumberEmptyOrTooLong
 	}
-	if err := s.validateUpdateVoucherVoucherItems(tx, req.Items); err != nil {
+	if err := s.validateVoucherItemsCount(tx, req.Items, req.ID); err != nil {
 		return err
 	}
-	if err := s.validateVoucherItemsCount(tx, req.Items, req.ID); err != nil {
-		return nil
+	if err := s.validateUpdateVoucherVoucherItems(tx, req.Items); err != nil {
+		return err
 	}
 	return nil
 }
@@ -323,7 +323,9 @@ func (s *VoucherService) validateUpdateVoucherVoucherItems(tx *gorm.DB, items vo
 		}
 	}
 	for _, item := range items.Updated {
-		// TODO check if item exists
+		if err := s.validateVoucherItemExists(tx, item.ID); err != nil {
+			return err
+		}
 		if err := s.validateDebitCredit(item.Debit, item.Credit); err != nil {
 			return err
 		}
@@ -336,6 +338,18 @@ func (s *VoucherService) validateUpdateVoucherVoucherItems(tx *gorm.DB, items vo
 		return err
 	}
 
+	return nil
+}
+
+func (s *VoucherService) validateVoucherItemExists(tx *gorm.DB, itemID int) error {
+	var existingItem models.VoucherItem
+	if err := tx.First(&existingItem, itemID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return constants.ErrVoucherItemNotFound
+		}
+		log.Printf("Unexpected error while finding voucher item: %v", err)
+		return constants.ErrUnexpectedError
+	}
 	return nil
 }
 
@@ -372,6 +386,10 @@ func (s *VoucherService) validateVoucherUpdateDebitCreditBalance(tx *gorm.DB, it
 
 		totalDebit -= currentItem.Debit
 		totalCredit -= currentItem.Credit
+	}
+
+	if totalDebit != totalCredit {
+		return constants.ErrDebitCreditMismatch
 	}
 
 	return nil
