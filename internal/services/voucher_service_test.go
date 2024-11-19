@@ -1110,3 +1110,124 @@ func Test_UpdateVoucher_ReturnsErrVoucherItemsCountOutOfRange_WhenCountExceedsFi
 	assert.ErrorIs(t, err, constants.ErrVoucherItemsCountOutOfRange)
 	assert.Nil(t, voucher)
 }
+
+func Test_DeleteVoucher_Succeeds_WithValidRequest(t *testing.T) {
+	createdVoucher, err := createRandomVoucher()
+	require.Nil(t, err)
+
+	deleteReq := &voucher.DeleteRequest{
+		ID:      createdVoucher.ID,
+		Version: createdVoucher.RowVersion,
+	}
+
+	err = voucherService.DeleteVoucher(deleteReq)
+
+	require.Nil(t, err)
+
+	_, err = voucherService.GetVoucher(&voucher.GetRequest{ID: createdVoucher.ID})
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrVoucherNotFound)
+}
+
+func Test_DeleteVoucher_ReturnsErrVoucherNotFound_WithNonExistingVoucherID(t *testing.T) {
+	deleteReq := &voucher.DeleteRequest{
+		ID: generateRandomInt64(),
+	}
+
+	err := voucherService.DeleteVoucher(deleteReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrVoucherNotFound)
+}
+
+func Test_DeleteVoucher_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
+	voucherDto, err := createRandomVoucher()
+	require.Nil(t, err)
+
+	SLWithDL, err := createRandomSL(&slService, true)
+	require.Nil(t, err)
+
+	SLWithoutDL, err := createRandomSL(&slService, false)
+	require.Nil(t, err)
+
+	DL, err := createRandomDL(&dlService)
+	require.Nil(t, err)
+
+	items := voucher.VoucherItemsUpdate{
+		Inserted: []voucher.VoucherItemInsertDetail{
+			{
+				SLID:   SLWithDL.ID,
+				DLID:   &DL.ID,
+				Debit:  1000,
+				Credit: 0,
+			},
+			{
+				SLID:   SLWithoutDL.ID,
+				DLID:   nil,
+				Debit:  0,
+				Credit: 500,
+			},
+		},
+		Updated: []voucher.VoucherItemUpdateDetail{
+			{
+				ID:     voucherDto.VoucherItems[0].ID,
+				SLID:   voucherDto.VoucherItems[0].SLID,
+				DLID:   &voucherDto.VoucherItems[0].DLID,
+				Debit:  0,
+				Credit: 500,
+			},
+		},
+		Deleted: []int{
+			voucherDto.VoucherItems[1].ID,
+		},
+	}
+
+	validUpdateReq := &voucher.UpdateRequest{
+		ID:      voucherDto.ID,
+		Version: voucherDto.RowVersion,
+		Number:  generateRandomString(20),
+		Items:   items,
+	}
+
+	_, err = voucherService.UpdateVoucher(validUpdateReq)
+	require.Nil(t, err)
+
+	deleteReq := &voucher.DeleteRequest{
+		ID:      voucherDto.ID,
+		Version: voucherDto.RowVersion,
+	}
+
+	err = voucherService.DeleteVoucher(deleteReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrVersionOutdated)
+}
+
+func Test_GetVoucher_Succeeds_WithValidRequest(t *testing.T) {
+	createdVoucher, err := createRandomVoucher()
+	require.Nil(t, err)
+
+	getReq := &voucher.GetRequest{
+		ID: createdVoucher.ID,
+	}
+
+	voucherDto, err := voucherService.GetVoucher(getReq)
+
+	require.Nil(t, err)
+	assert.Equal(t, createdVoucher.ID, voucherDto.ID)
+	assert.Equal(t, createdVoucher.Number, voucherDto.Number)
+}
+
+func Test_GetVoucher_ReturnsErrVoucherNotFound_WithNonExistingVoucherID(t *testing.T) {
+	newID := generateRandomInt64()
+
+	getReq := &voucher.GetRequest{
+		ID: newID,
+	}
+
+	voucherDto, err := voucherService.GetVoucher(getReq)
+
+	require.NotNil(t, err)
+	assert.ErrorIs(t, err, constants.ErrVoucherNotFound)
+	assert.Nil(t, voucherDto)
+}
