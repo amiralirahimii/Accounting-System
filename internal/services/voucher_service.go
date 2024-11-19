@@ -3,6 +3,8 @@ package services
 import (
 	"accountingsystem/db"
 	"accountingsystem/internal/constants"
+	"accountingsystem/internal/dtos"
+	"accountingsystem/internal/mappers"
 	"accountingsystem/internal/models"
 	"accountingsystem/internal/requests/voucher"
 	"database/sql"
@@ -14,7 +16,7 @@ import (
 
 type VoucherService struct{}
 
-func (s *VoucherService) CreateVoucher(req *voucher.InsertRequest) (*models.Voucher, error) {
+func (s *VoucherService) CreateVoucher(req *voucher.InsertRequest) (*dtos.VoucherDto, error) {
 	if err := s.validateInsertVoucherRequest(req); err != nil {
 		return nil, err
 	}
@@ -32,7 +34,8 @@ func (s *VoucherService) CreateVoucher(req *voucher.InsertRequest) (*models.Vouc
 		return nil, constants.ErrUnexpectedError
 	}
 
-	if err := s.insertVoucherItems(tx, voucher.ID, req.VoucherItems); err != nil {
+	voucherItems, err := s.insertVoucherItems(tx, voucher.ID, req.VoucherItems)
+	if err != nil {
 		tx.Rollback()
 		log.Printf("Error inserting voucher items: %v", err)
 		return nil, constants.ErrUnexpectedError
@@ -43,7 +46,7 @@ func (s *VoucherService) CreateVoucher(req *voucher.InsertRequest) (*models.Vouc
 		return nil, constants.ErrUnexpectedError
 	}
 
-	return voucher, nil
+	return mappers.ToVoucherDto(voucher, voucherItems), nil
 }
 
 func (s *VoucherService) validateInsertVoucherRequest(req *voucher.InsertRequest) error {
@@ -138,7 +141,7 @@ func (s *VoucherService) insertVoucher(tx *gorm.DB, number string) (*models.Vouc
 	return voucher, nil
 }
 
-func (s *VoucherService) insertVoucherItems(tx *gorm.DB, voucherID int, items []voucher.VoucherItemInsertDetail) error {
+func (s *VoucherService) insertVoucherItems(tx *gorm.DB, voucherID int, items []voucher.VoucherItemInsertDetail) ([]models.VoucherItem, error) {
 	var voucherItems []models.VoucherItem
 
 	for _, item := range items {
@@ -155,11 +158,11 @@ func (s *VoucherService) insertVoucherItems(tx *gorm.DB, voucherID int, items []
 	if len(voucherItems) > 0 {
 		if err := tx.Create(&voucherItems).Error; err != nil {
 			log.Printf("Error batch inserting voucher items: %v", err)
-			return constants.ErrUnexpectedError
+			return nil, constants.ErrUnexpectedError
 		}
 	}
 
-	return nil
+	return voucherItems, nil
 }
 
 func (s *VoucherService) convertToNullInt64(num *int) sql.NullInt64 {
@@ -251,7 +254,7 @@ func (s *VoucherService) applyVoucherChanges(tx *gorm.DB, req *voucher.UpdateReq
 	if err := s.deleteVoucherItems(tx, req.Items.Deleted); err != nil {
 		return err
 	}
-	if err := s.insertVoucherItems(tx, existingVoucher.ID, req.Items.Inserted); err != nil {
+	if _, err := s.insertVoucherItems(tx, existingVoucher.ID, req.Items.Inserted); err != nil {
 		return err
 	}
 	if err := s.updateVoucherItems(tx, req.Items.Updated); err != nil {
@@ -320,6 +323,7 @@ func (s *VoucherService) validateUpdateVoucherVoucherItems(tx *gorm.DB, items vo
 		}
 	}
 	for _, item := range items.Updated {
+		// TODO check if item exists
 		if err := s.validateDebitCredit(item.Debit, item.Credit); err != nil {
 			return err
 		}
