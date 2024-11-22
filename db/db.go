@@ -3,8 +3,10 @@ package db
 import (
 	"accountingsystem/config"
 	"accountingsystem/internal/constants"
+	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -46,6 +48,12 @@ func loadVars() (string, string, string, string, string, string, error) {
 	return host, user, password, dbName, port, sslMode, nil
 }
 
+func configureConnectionPool(sqlDB *sql.DB) {
+	sqlDB.SetMaxOpenConns(20)
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)
+}
+
 func Init() error {
 	host, user, password, dbName, port, sslMode, err := loadVars()
 	if err != nil {
@@ -61,6 +69,14 @@ func Init() error {
 		log.Fatalf("Failed to connect to the database: %v", err)
 		return err
 	}
+
+	sqlDB, err := DB.DB()
+	if err != nil {
+		log.Fatalf("Failed to get sql.DB from GORM: %v", err)
+		return err
+	}
+
+	configureConnectionPool(sqlDB)
 
 	return nil
 }
