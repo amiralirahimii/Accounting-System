@@ -415,7 +415,7 @@ func Test_CreateVoucher_ReturnsErrDLNotFound_WithInvalidDLID(t *testing.T) {
 	assert.Nil(t, voucher)
 }
 
-func createRandomVoucher() (*dtos.VoucherDto, error) {
+func createRandomVoucher() (*dtos.VoucherWithItemsDto, error) {
 	slWithDL, err := createRandomSL(&slService, true)
 	if err != nil {
 		return nil, err
@@ -521,13 +521,13 @@ func Test_UpdateVoucher_ReturnsErrVoucherNotFound_WithNonExistentVoucherID(t *te
 	items := voucher.VoucherItemsUpdate{
 		Inserted: []voucher.VoucherItemInsertDetail{
 			{
-				SLID:   insertReq.VoucherItems[0].SLID,
+				SLID:   insertReq.VoucherItems[1].SLID,
 				DLID:   nil,
 				Debit:  100,
 				Credit: 0,
 			},
 			{
-				SLID:   insertReq.VoucherItems[0].SLID,
+				SLID:   insertReq.VoucherItems[1].SLID,
 				DLID:   nil,
 				Debit:  0,
 				Credit: 100,
