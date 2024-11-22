@@ -15,6 +15,10 @@ import (
 
 var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
+var dlService DLService
+var slService SLService
+var voucherService VoucherService
+
 func TestMain(m *testing.M) {
 	err := config.InitConfig("../../.env.test")
 	if err != nil {
@@ -42,7 +46,7 @@ func generateRandomInt64() int {
 	return int(seededRand.Uint64() & 0x7FFFFFFFFFFFFFFF)
 }
 
-func createRandomSL(s *SLService, hasDL bool) (*dtos.SLDto, error) {
+func createRandomSL(hasDL bool) (*dtos.SLDto, error) {
 	randomCode := "SL" + generateRandomString(20)
 	randomTitle := "Test" + generateRandomString(20)
 	req := &sl.InsertRequest{
@@ -50,16 +54,15 @@ func createRandomSL(s *SLService, hasDL bool) (*dtos.SLDto, error) {
 		Title: randomTitle,
 		HasDL: hasDL,
 	}
-	return s.CreateSL(req)
+	return slService.CreateSL(req)
 }
 
-func createRandomDL(s *DLService) (*dtos.DLDto, error) {
+func createRandomDL() (*dtos.DLDto, error) {
 	randomCode := "DL" + generateRandomString(20)
 	randomTitle := "Test" + generateRandomString(20)
 	req := &dl.InsertRequest{
 		Code:  randomCode,
 		Title: randomTitle,
 	}
-	createDL, err := s.CreateDL(req)
-	return createDL, err
+	return dlService.CreateDL(req)
 }

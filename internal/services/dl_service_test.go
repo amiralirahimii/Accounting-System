@@ -19,8 +19,7 @@ func Test_CreateDL_Succeeds_WithValidRequest(t *testing.T) {
 		Title: randomTitle,
 	}
 
-	service := DLService{}
-	dl, err := service.CreateDL(req)
+	dl, err := dlService.CreateDL(req)
 
 	require.Nil(t, err)
 	assert.Equal(t, dl.Code, req.Code)
@@ -34,8 +33,7 @@ func Test_CreateDL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
 		Title: randomTitle,
 	}
 
-	service := DLService{}
-	dl, err := service.CreateDL(req)
+	dl, err := dlService.CreateDL(req)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
@@ -50,8 +48,7 @@ func Test_CreateDL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
 		Title: randomTitle,
 	}
 
-	service := DLService{}
-	dl, err := service.CreateDL(req)
+	dl, err := dlService.CreateDL(req)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
@@ -65,8 +62,7 @@ func Test_CreateDL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
 		Title: "",
 	}
 
-	service := DLService{}
-	dl, err := service.CreateDL(req)
+	dl, err := dlService.CreateDL(req)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
@@ -81,8 +77,7 @@ func Test_CreateDL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) 
 		Title: randomTitle,
 	}
 
-	service := DLService{}
-	dl, err := service.CreateDL(req)
+	dl, err := dlService.CreateDL(req)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
@@ -96,17 +91,17 @@ func Test_CreateDL_ReturnsErrCodeAlreadyExists_WithExistingCode(t *testing.T) {
 		Code:  randomCode,
 		Title: randomTitle,
 	}
+
+	_, err := dlService.CreateDL(validReq)
+	require.Nil(t, err)
+
 	randomTitleNotExisting := "Test" + generateRandomString(20)
 	reqWithExistingCode := &dl.InsertRequest{
 		Code:  randomCode,
 		Title: randomTitleNotExisting,
 	}
 
-	service := DLService{}
-	_, err := service.CreateDL(validReq)
-	require.Nil(t, err)
-
-	dl, err := service.CreateDL(reqWithExistingCode)
+	dl, err := dlService.CreateDL(reqWithExistingCode)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrCodeAlreadyExists)
@@ -120,17 +115,17 @@ func Test_CreateDL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) 
 		Code:  randomCode,
 		Title: randomTitle,
 	}
+
+	_, err := dlService.CreateDL(validReq)
+	require.Nil(t, err)
+
 	randomCodeNotExisting := "DL" + generateRandomString(20)
 	reqWithExistingTitle := &dl.InsertRequest{
 		Code:  randomCodeNotExisting,
 		Title: randomTitle,
 	}
 
-	service := DLService{}
-	_, err := service.CreateDL(validReq)
-	require.Nil(t, err)
-
-	dl, err := service.CreateDL(reqWithExistingTitle)
+	dl, err := dlService.CreateDL(reqWithExistingTitle)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleAlreadyExists)
@@ -138,8 +133,7 @@ func Test_CreateDL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) 
 }
 
 func Test_UpdateDL_Succeeds_WithValidRequest(t *testing.T) {
-	service := DLService{}
-	createdDL, err := createRandomDL(&service)
+	createdDL, err := createRandomDL()
 	require.Nil(t, err)
 
 	newRandomCode := "DL" + generateRandomString(20)
@@ -151,7 +145,7 @@ func Test_UpdateDL_Succeeds_WithValidRequest(t *testing.T) {
 		Version: createdDL.RowVersion,
 	}
 
-	updatedDL, err := service.UpdateDL(updateReq)
+	updatedDL, err := dlService.UpdateDL(updateReq)
 
 	require.Nil(t, err)
 	assert.Equal(t, updatedDL.Code, updateReq.Code)
@@ -159,8 +153,7 @@ func Test_UpdateDL_Succeeds_WithValidRequest(t *testing.T) {
 }
 
 func Test_UpdateDL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
-	service := DLService{}
-	createdDL, _ := createRandomDL(&service)
+	createdDL, _ := createRandomDL()
 
 	newRandomTitle := "Test" + generateRandomString(20)
 	updateReq := &dl.UpdateRequest{
@@ -170,7 +163,7 @@ func Test_UpdateDL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
 		Version: createdDL.RowVersion,
 	}
 
-	updatedDL, err := service.UpdateDL(updateReq)
+	updatedDL, err := dlService.UpdateDL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
@@ -178,8 +171,7 @@ func Test_UpdateDL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
 }
 
 func Test_UpdateDL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
-	service := DLService{}
-	createdDL, _ := createRandomDL(&service)
+	createdDL, _ := createRandomDL()
 
 	newRandomCode := generateRandomString(65)
 	newRandomTitle := "Test" + generateRandomString(20)
@@ -190,7 +182,7 @@ func Test_UpdateDL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
 		Version: createdDL.RowVersion,
 	}
 
-	updatedDL, err := service.UpdateDL(updateReq)
+	updatedDL, err := dlService.UpdateDL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
@@ -198,8 +190,7 @@ func Test_UpdateDL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
 }
 
 func Test_UpdateDL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
-	service := DLService{}
-	createdDL, _ := createRandomDL(&service)
+	createdDL, _ := createRandomDL()
 
 	newRandomCode := "DL" + generateRandomString(20)
 	updateReq := &dl.UpdateRequest{
@@ -209,7 +200,7 @@ func Test_UpdateDL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
 		Version: createdDL.RowVersion,
 	}
 
-	updatedDL, err := service.UpdateDL(updateReq)
+	updatedDL, err := dlService.UpdateDL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
@@ -217,8 +208,7 @@ func Test_UpdateDL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
 }
 
 func Test_UpdateDL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) {
-	service := DLService{}
-	createdDL, _ := createRandomDL(&service)
+	createdDL, _ := createRandomDL()
 
 	newRandomCode := "DL" + generateRandomString(20)
 	newRandomTitle := generateRandomString(65)
@@ -229,7 +219,7 @@ func Test_UpdateDL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) 
 		Version: createdDL.RowVersion,
 	}
 
-	updatedDL, err := service.UpdateDL(updateReq)
+	updatedDL, err := dlService.UpdateDL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
@@ -237,7 +227,6 @@ func Test_UpdateDL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) 
 }
 
 func Test_UpdateDL_ReturnsErrDLNotFound_WithNonExistingID(t *testing.T) {
-	service := DLService{}
 	newRandomCode := "DL" + generateRandomString(20)
 	newRandomTitle := "Test" + generateRandomString(20)
 	newID := generateRandomInt64()
@@ -248,7 +237,7 @@ func Test_UpdateDL_ReturnsErrDLNotFound_WithNonExistingID(t *testing.T) {
 		Title: newRandomTitle,
 	}
 
-	updatedDL, err := service.UpdateDL(updateReq)
+	updatedDL, err := dlService.UpdateDL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrDLNotFound)
@@ -256,8 +245,7 @@ func Test_UpdateDL_ReturnsErrDLNotFound_WithNonExistingID(t *testing.T) {
 }
 
 func Test_UpdateDL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
-	service := DLService{}
-	createdDL, _ := createRandomDL(&service)
+	createdDL, _ := createRandomDL()
 
 	newRandomCode := "DL" + generateRandomString(20)
 	newRandomTitle := "Test" + generateRandomString(20)
@@ -267,6 +255,9 @@ func Test_UpdateDL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 		Title:   newRandomTitle,
 		Version: createdDL.RowVersion,
 	}
+
+	_, err := dlService.UpdateDL(updateReq)
+	require.Nil(t, err)
 
 	newRandomCode2 := "DL" + generateRandomString(20)
 	newRandomTitle2 := "Test" + generateRandomString(20)
@@ -277,10 +268,7 @@ func Test_UpdateDL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 		Version: createdDL.RowVersion,
 	}
 
-	_, err := service.UpdateDL(updateReq)
-	require.Nil(t, err)
-
-	updatedDL, err := service.UpdateDL(updateReqWithOutdatedVersion)
+	updatedDL, err := dlService.UpdateDL(updateReqWithOutdatedVersion)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrVersionOutdated)
@@ -288,9 +276,8 @@ func Test_UpdateDL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 }
 
 func Test_UpdateDL_ReturnsErrCodeAlreadyExists_WithExistingCode(t *testing.T) {
-	service := DLService{}
-	createdDL1, _ := createRandomDL(&service)
-	createdDL2, _ := createRandomDL(&service)
+	createdDL1, _ := createRandomDL()
+	createdDL2, _ := createRandomDL()
 
 	newRandomTitle := "Test" + generateRandomString(20)
 	updateReq := &dl.UpdateRequest{
@@ -300,7 +287,7 @@ func Test_UpdateDL_ReturnsErrCodeAlreadyExists_WithExistingCode(t *testing.T) {
 		Version: createdDL1.RowVersion,
 	}
 
-	updatedDL, err := service.UpdateDL(updateReq)
+	updatedDL, err := dlService.UpdateDL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrCodeAlreadyExists)
@@ -308,9 +295,8 @@ func Test_UpdateDL_ReturnsErrCodeAlreadyExists_WithExistingCode(t *testing.T) {
 }
 
 func Test_UpdateDL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) {
-	service := DLService{}
-	createdDL1, _ := createRandomDL(&service)
-	createdDL2, _ := createRandomDL(&service)
+	createdDL1, _ := createRandomDL()
+	createdDL2, _ := createRandomDL()
 
 	newRandomCode := "DL" + generateRandomString(20)
 	updateReq := &dl.UpdateRequest{
@@ -320,7 +306,7 @@ func Test_UpdateDL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) 
 		Version: createdDL1.RowVersion,
 	}
 
-	updatedDL, err := service.UpdateDL(updateReq)
+	updatedDL, err := dlService.UpdateDL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleAlreadyExists)
@@ -328,55 +314,51 @@ func Test_UpdateDL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) 
 }
 
 func Test_DeleteDL_Succeeds_WithValidRequest(t *testing.T) {
-	service := DLService{}
-	createdDL, _ := createRandomDL(&service)
+	createdDL, _ := createRandomDL()
 
 	deleteReq := &dl.DeleteRequest{
 		ID:      createdDL.ID,
 		Version: createdDL.RowVersion,
 	}
 
-	err := service.DeleteDL(deleteReq)
+	err := dlService.DeleteDL(deleteReq)
 
 	require.Nil(t, err)
 }
 
 func Test_DeleteDL_ReturnsErrDLNotFound_WithNonExistingID(t *testing.T) {
-	service := DLService{}
 	newID := generateRandomInt64()
 
 	deleteReq := &dl.DeleteRequest{
 		ID: newID,
 	}
 
-	err := service.DeleteDL(deleteReq)
+	err := dlService.DeleteDL(deleteReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrDLNotFound)
 }
 
 func Test_DeleteDL_ReturnsErrDLNotFound_WithDeletedID(t *testing.T) {
-	service := DLService{}
-	createdDL, _ := createRandomDL(&service)
+	createdDL, _ := createRandomDL()
 
 	deleteReq := &dl.DeleteRequest{
 		ID:      createdDL.ID,
 		Version: createdDL.RowVersion,
 	}
 
-	err := service.DeleteDL(deleteReq)
+	err := dlService.DeleteDL(deleteReq)
 
 	require.Nil(t, err)
 
-	err = service.DeleteDL(deleteReq)
+	err = dlService.DeleteDL(deleteReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrDLNotFound)
 }
 
 func Test_DeleteDL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
-	service := DLService{}
-	createdDL, _ := createRandomDL(&service)
+	createdDL, _ := createRandomDL()
 
 	newRandomCode := "DL" + generateRandomString(20)
 	newRandomTitle := "Test" + generateRandomString(20)
@@ -387,7 +369,7 @@ func Test_DeleteDL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 		Version: createdDL.RowVersion,
 	}
 
-	_, err := service.UpdateDL(updateReq)
+	_, err := dlService.UpdateDL(updateReq)
 	require.Nil(t, err)
 
 	deleteReq := &dl.DeleteRequest{
@@ -395,7 +377,7 @@ func Test_DeleteDL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 		Version: createdDL.RowVersion,
 	}
 
-	err = service.DeleteDL(deleteReq)
+	err = dlService.DeleteDL(deleteReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrVersionOutdated)
@@ -410,11 +392,9 @@ func Test_DeleteDL_ReturnsErrThereIsRefrenceToDL_WithExistingReference(t *testin
 	})
 	require.Nil(t, err)
 
-	service := DLService{}
-	createdDL, err := createRandomDL(&service)
+	createdDL, err := createRandomDL()
 	require.Nil(t, err)
 
-	voucherService := VoucherService{}
 	items := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   slWithDL.ID,
@@ -440,21 +420,20 @@ func Test_DeleteDL_ReturnsErrThereIsRefrenceToDL_WithExistingReference(t *testin
 		ID:      createdDL.ID,
 		Version: createdDL.RowVersion,
 	}
-	err = service.DeleteDL(deleteReq)
+	err = dlService.DeleteDL(deleteReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrThereIsRefrenceToDL)
 }
 
 func Test_GetDLByID_Succeeds_WithValidID(t *testing.T) {
-	service := DLService{}
-	createdDL, _ := createRandomDL(&service)
+	createdDL, _ := createRandomDL()
 
 	getReq := &dl.GetRequest{
 		ID: createdDL.ID,
 	}
 
-	foundDL, err := service.GetDL(getReq)
+	foundDL, err := dlService.GetDL(getReq)
 
 	require.Nil(t, err)
 	assert.Equal(t, createdDL.ID, foundDL.ID)
@@ -464,14 +443,13 @@ func Test_GetDLByID_Succeeds_WithValidID(t *testing.T) {
 }
 
 func Test_GetDLByID_ReturnsErrDLNotFound_WithNonExistingID(t *testing.T) {
-	service := DLService{}
 	newID := generateRandomInt64()
 
 	getReq := &dl.GetRequest{
 		ID: newID,
 	}
 
-	foundDL, err := service.GetDL(getReq)
+	foundDL, err := dlService.GetDL(getReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrDLNotFound)

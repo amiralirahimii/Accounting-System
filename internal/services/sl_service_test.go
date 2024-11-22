@@ -11,7 +11,6 @@ import (
 )
 
 func Test_CreateSL_Succeeds_WithValidRequest(t *testing.T) {
-	service := SLService{}
 	randomCode := "SL" + generateRandomString(20)
 	randomTitle := "Test" + generateRandomString(20)
 
@@ -21,7 +20,7 @@ func Test_CreateSL_Succeeds_WithValidRequest(t *testing.T) {
 		HasDL: true,
 	}
 
-	sl, err := service.CreateSL(req)
+	sl, err := slService.CreateSL(req)
 
 	require.Nil(t, err)
 	assert.Equal(t, sl.Code, req.Code)
@@ -30,7 +29,6 @@ func Test_CreateSL_Succeeds_WithValidRequest(t *testing.T) {
 }
 
 func Test_CreateSL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
-	service := SLService{}
 	randomTitle := "Test" + generateRandomString(20)
 
 	req := &sl.InsertRequest{
@@ -39,7 +37,7 @@ func Test_CreateSL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
 		HasDL: true,
 	}
 
-	sl, err := service.CreateSL(req)
+	sl, err := slService.CreateSL(req)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
@@ -47,7 +45,6 @@ func Test_CreateSL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
 }
 
 func Test_CreateSL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
-	service := SLService{}
 	randomCode := generateRandomString(65)
 	randomTitle := "Test" + generateRandomString(20)
 
@@ -57,7 +54,7 @@ func Test_CreateSL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
 		HasDL: false,
 	}
 
-	sl, err := service.CreateSL(req)
+	sl, err := slService.CreateSL(req)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
@@ -65,7 +62,6 @@ func Test_CreateSL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
 }
 
 func Test_CreateSL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
-	service := SLService{}
 	randomCode := "SL" + generateRandomString(20)
 
 	req := &sl.InsertRequest{
@@ -74,7 +70,7 @@ func Test_CreateSL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
 		HasDL: false,
 	}
 
-	sl, err := service.CreateSL(req)
+	sl, err := slService.CreateSL(req)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
@@ -82,7 +78,6 @@ func Test_CreateSL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
 }
 
 func Test_CreateSL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) {
-	service := SLService{}
 	randomCode := "SL" + generateRandomString(20)
 	randomTitle := generateRandomString(65)
 
@@ -92,7 +87,7 @@ func Test_CreateSL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) 
 		HasDL: true,
 	}
 
-	sl, err := service.CreateSL(req)
+	sl, err := slService.CreateSL(req)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
@@ -100,8 +95,7 @@ func Test_CreateSL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) 
 }
 
 func Test_CreateSL_ReturnsErrCodeAlreadyExists_WithExistingCode(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	duplicateReq := &sl.InsertRequest{
@@ -110,7 +104,7 @@ func Test_CreateSL_ReturnsErrCodeAlreadyExists_WithExistingCode(t *testing.T) {
 		HasDL: true,
 	}
 
-	sl, err := service.CreateSL(duplicateReq)
+	sl, err := slService.CreateSL(duplicateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrCodeAlreadyExists)
@@ -118,8 +112,7 @@ func Test_CreateSL_ReturnsErrCodeAlreadyExists_WithExistingCode(t *testing.T) {
 }
 
 func Test_CreateSL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	duplicateReq := &sl.InsertRequest{
@@ -128,7 +121,7 @@ func Test_CreateSL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) 
 		HasDL: true,
 	}
 
-	sl, err := service.CreateSL(duplicateReq)
+	sl, err := slService.CreateSL(duplicateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleAlreadyExists)
@@ -136,8 +129,7 @@ func Test_CreateSL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) 
 }
 
 func Test_UpdateSL_Succeeds_WithValidRequest(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	newRandomCode := "SL" + generateRandomString(20)
@@ -150,7 +142,7 @@ func Test_UpdateSL_Succeeds_WithValidRequest(t *testing.T) {
 		Version: createdSL.RowVersion,
 	}
 
-	updatedSL, err := service.UpdateSL(updateReq)
+	updatedSL, err := slService.UpdateSL(updateReq)
 
 	require.Nil(t, err)
 	assert.Equal(t, updatedSL.Code, updateReq.Code)
@@ -159,8 +151,7 @@ func Test_UpdateSL_Succeeds_WithValidRequest(t *testing.T) {
 }
 
 func Test_UpdateSL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	newRandomTitle := "UpdatedTitle" + generateRandomString(20)
@@ -172,7 +163,7 @@ func Test_UpdateSL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
 		Version: createdSL.RowVersion,
 	}
 
-	updatedSL, err := service.UpdateSL(updateReq)
+	updatedSL, err := slService.UpdateSL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
@@ -180,8 +171,7 @@ func Test_UpdateSL_ReturnsErrCodeEmptyOrTooLong_WithEmptyCode(t *testing.T) {
 }
 
 func Test_UpdateSL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	newRandomCode := generateRandomString(65)
@@ -194,7 +184,7 @@ func Test_UpdateSL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
 		Version: createdSL.RowVersion,
 	}
 
-	updatedSL, err := service.UpdateSL(updateReq)
+	updatedSL, err := slService.UpdateSL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrCodeEmptyOrTooLong)
@@ -202,8 +192,7 @@ func Test_UpdateSL_ReturnsErrCodeEmptyOrTooLong_WithTooLongCode(t *testing.T) {
 }
 
 func Test_UpdateSL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	newRandomCode := "SL" + generateRandomString(20)
@@ -215,7 +204,7 @@ func Test_UpdateSL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
 		Version: createdSL.RowVersion,
 	}
 
-	updatedSL, err := service.UpdateSL(updateReq)
+	updatedSL, err := slService.UpdateSL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
@@ -223,8 +212,7 @@ func Test_UpdateSL_ReturnsErrTitleEmptyOrTooLong_WithEmptyTitle(t *testing.T) {
 }
 
 func Test_UpdateSL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	newRandomCode := "SL" + generateRandomString(20)
@@ -237,7 +225,7 @@ func Test_UpdateSL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) 
 		Version: createdSL.RowVersion,
 	}
 
-	updatedSL, err := service.UpdateSL(updateReq)
+	updatedSL, err := slService.UpdateSL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleEmptyOrTooLong)
@@ -245,7 +233,6 @@ func Test_UpdateSL_ReturnsErrTitleEmptyOrTooLong_WithTooLongTitle(t *testing.T) 
 }
 
 func Test_UpdateSL_ReturnsErrSLNotFound_WithNonExistingID(t *testing.T) {
-	service := SLService{}
 	newRandomCode := "SL" + generateRandomString(20)
 	newRandomTitle := "NewTitle" + generateRandomString(20)
 
@@ -256,7 +243,7 @@ func Test_UpdateSL_ReturnsErrSLNotFound_WithNonExistingID(t *testing.T) {
 		HasDL: true,
 	}
 
-	updatedSL, err := service.UpdateSL(updateReq)
+	updatedSL, err := slService.UpdateSL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrSLNotFound)
@@ -264,8 +251,7 @@ func Test_UpdateSL_ReturnsErrSLNotFound_WithNonExistingID(t *testing.T) {
 }
 
 func Test_UpdateSL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	newRandomCode := "SL" + generateRandomString(20)
@@ -279,7 +265,7 @@ func Test_UpdateSL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 		Version: createdSL.RowVersion,
 	}
 
-	_, err = service.UpdateSL(updateReq1)
+	_, err = slService.UpdateSL(updateReq1)
 	require.Nil(t, err)
 
 	newRandomCode2 := "SL" + generateRandomString(20)
@@ -293,7 +279,7 @@ func Test_UpdateSL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 		Version: createdSL.RowVersion,
 	}
 
-	updatedSL, err := service.UpdateSL(updateReq2)
+	updatedSL, err := slService.UpdateSL(updateReq2)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrVersionOutdated)
@@ -301,11 +287,10 @@ func Test_UpdateSL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 }
 
 func Test_UpdateSL_ReturnsErrCodeAlreadyExists_WithExistingCode(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
-	duplicateSL, err := createRandomSL(&service, true)
+	duplicateSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	newRandomTitle := "NewTitle" + generateRandomString(20)
@@ -318,7 +303,7 @@ func Test_UpdateSL_ReturnsErrCodeAlreadyExists_WithExistingCode(t *testing.T) {
 		Version: createdSL.RowVersion,
 	}
 
-	updatedSL, err := service.UpdateSL(updateReq)
+	updatedSL, err := slService.UpdateSL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrCodeAlreadyExists)
@@ -326,11 +311,10 @@ func Test_UpdateSL_ReturnsErrCodeAlreadyExists_WithExistingCode(t *testing.T) {
 }
 
 func Test_UpdateSL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
-	duplicateSL, err := createRandomSL(&service, true)
+	duplicateSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	newRandomCode := "SL" + generateRandomString(20)
@@ -343,7 +327,7 @@ func Test_UpdateSL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) 
 		Version: createdSL.RowVersion,
 	}
 
-	updatedSL, err := service.UpdateSL(updateReq)
+	updatedSL, err := slService.UpdateSL(updateReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrTitleAlreadyExists)
@@ -351,15 +335,12 @@ func Test_UpdateSL_ReturnsErrTitleAlreadyExists_WithExistingTitle(t *testing.T) 
 }
 
 func Test_UpdateSL_ReturnsErrThereIsReferenceToSL_WithReferencedSL(t *testing.T) {
-	slService := SLService{}
-	createdSL, err := createRandomSL(&slService, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
-	dlService := DLService{}
-	createdDL, err := createRandomDL(&dlService)
+	createdDL, err := createRandomDL()
 	require.Nil(t, err)
 
-	voucherService := VoucherService{}
 	voucherItems := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   createdSL.ID,
@@ -397,8 +378,7 @@ func Test_UpdateSL_ReturnsErrThereIsReferenceToSL_WithReferencedSL(t *testing.T)
 }
 
 func Test_DeleteSL_Succeeds_WithValidRequest(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	deleteReq := &sl.DeleteRequest{
@@ -406,26 +386,24 @@ func Test_DeleteSL_Succeeds_WithValidRequest(t *testing.T) {
 		Version: createdSL.RowVersion,
 	}
 
-	err = service.DeleteSL(deleteReq)
+	err = slService.DeleteSL(deleteReq)
 
 	require.Nil(t, err)
 }
 
 func Test_DeleteSL_ReturnsErrSLNotFound_WithNonExistingID(t *testing.T) {
-	service := SLService{}
 	deleteReq := &sl.DeleteRequest{
 		ID: generateRandomInt64(),
 	}
 
-	err := service.DeleteSL(deleteReq)
+	err := slService.DeleteSL(deleteReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrSLNotFound)
 }
 
 func Test_DeleteSL_ReturnsErrSLNotFound_WithDeletedID(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	deleteReq := &sl.DeleteRequest{
@@ -433,17 +411,16 @@ func Test_DeleteSL_ReturnsErrSLNotFound_WithDeletedID(t *testing.T) {
 		Version: createdSL.RowVersion,
 	}
 
-	err = service.DeleteSL(deleteReq)
+	err = slService.DeleteSL(deleteReq)
 	require.Nil(t, err)
 
-	err = service.DeleteSL(deleteReq)
+	err = slService.DeleteSL(deleteReq)
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrSLNotFound)
 }
 
 func Test_DeleteSL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	newRandomCode := "SL" + generateRandomString(20)
@@ -457,7 +434,7 @@ func Test_DeleteSL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 		Version: createdSL.RowVersion,
 	}
 
-	_, err = service.UpdateSL(updateReq)
+	_, err = slService.UpdateSL(updateReq)
 	require.Nil(t, err)
 
 	deleteReq := &sl.DeleteRequest{
@@ -465,22 +442,21 @@ func Test_DeleteSL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 		Version: createdSL.RowVersion,
 	}
 
-	err = service.DeleteSL(deleteReq)
+	err = slService.DeleteSL(deleteReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrVersionOutdated)
 }
 
 func Test_GetSL_Succeeds_WithValidID(t *testing.T) {
-	service := SLService{}
-	createdSL, err := createRandomSL(&service, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	getReq := &sl.GetRequest{
 		ID: createdSL.ID,
 	}
 
-	sl, err := service.GetSL(getReq)
+	sl, err := slService.GetSL(getReq)
 
 	require.Nil(t, err)
 	assert.Equal(t, sl.ID, createdSL.ID)
@@ -490,12 +466,11 @@ func Test_GetSL_Succeeds_WithValidID(t *testing.T) {
 }
 
 func Test_GetSL_ReturnsErrSLNotFound_WithNonExistingID(t *testing.T) {
-	service := SLService{}
 	getReq := &sl.GetRequest{
 		ID: generateRandomInt64(),
 	}
 
-	sl, err := service.GetSL(getReq)
+	sl, err := slService.GetSL(getReq)
 
 	require.NotNil(t, err)
 	assert.ErrorIs(t, err, constants.ErrSLNotFound)
@@ -503,15 +478,12 @@ func Test_GetSL_ReturnsErrSLNotFound_WithNonExistingID(t *testing.T) {
 }
 
 func Test_DeleteSL_ReturnsErrThereIsReferenceToSL_WithReferencedSL(t *testing.T) {
-	slService := SLService{}
-	createdSL, err := createRandomSL(&slService, true)
+	createdSL, err := createRandomSL(true)
 	require.Nil(t, err)
 
-	dlService := DLService{}
-	createdDL, err := createRandomDL(&dlService)
+	createdDL, err := createRandomDL()
 	require.Nil(t, err)
 
-	voucherService := VoucherService{}
 	voucherItems := []voucher.VoucherItemInsertDetail{
 		{
 			SLID:   createdSL.ID,
