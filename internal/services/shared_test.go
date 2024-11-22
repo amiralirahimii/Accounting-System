@@ -1,7 +1,7 @@
 package services
 
 import (
-	"accountingsystem/config"
+	"accountingsystem/configs"
 	"accountingsystem/db"
 	"accountingsystem/internal/dtos"
 	"accountingsystem/internal/requests/dl"
@@ -22,7 +22,7 @@ var slService *SLService
 var voucherService *VoucherService
 
 func TestMain(m *testing.M) {
-	err := config.InitConfig("../../.env.test")
+	err := configs.InitConfig("../../.env.test")
 	if err != nil {
 		log.Fatalf("Failed to load test configuration: %v", err)
 	}

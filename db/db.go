@@ -1,7 +1,7 @@
 package db
 
 import (
-	"accountingsystem/config"
+	"accountingsystem/configs"
 	"accountingsystem/internal/constants"
 	"database/sql"
 	"fmt"
@@ -13,32 +13,32 @@ import (
 )
 
 func loadVars() (string, string, string, string, string, string, error) {
-	host, err := config.GetEnv("DB_HOST")
+	host, err := configs.GetEnv("DB_HOST")
 	if err != nil {
 		return "", "", "", "", "", "", fmt.Errorf("%w: DB_HOST", constants.ErrEnvNotFound)
 	}
 
-	user, err := config.GetEnv("DB_USER")
+	user, err := configs.GetEnv("DB_USER")
 	if err != nil {
 		return "", "", "", "", "", "", fmt.Errorf("%w: DB_USER", constants.ErrEnvNotFound)
 	}
 
-	password, err := config.GetEnv("DB_PASSWORD")
+	password, err := configs.GetEnv("DB_PASSWORD")
 	if err != nil {
 		return "", "", "", "", "", "", fmt.Errorf("%w: DB_PASSWORD", constants.ErrEnvNotFound)
 	}
 
-	dbName, err := config.GetEnv("DB_NAME")
+	dbName, err := configs.GetEnv("DB_NAME")
 	if err != nil {
 		return "", "", "", "", "", "", fmt.Errorf("%w: DB_NAME", constants.ErrEnvNotFound)
 	}
 
-	port, err := config.GetEnv("DB_PORT")
+	port, err := configs.GetEnv("DB_PORT")
 	if err != nil {
 		return "", "", "", "", "", "", fmt.Errorf("%w: DB_PORT", constants.ErrEnvNotFound)
 	}
 
-	sslMode, err := config.GetEnv("DB_SSLMODE")
+	sslMode, err := configs.GetEnv("DB_SSLMODE")
 	if err != nil {
 		return "", "", "", "", "", "", fmt.Errorf("%w: DB_SSLMODE", constants.ErrEnvNotFound)
 	}

@@ -1,14 +1,14 @@
 package main
 
 import (
-	"accountingsystem/config"
+	"accountingsystem/configs"
 	"accountingsystem/db"
 	"accountingsystem/internal/services"
 	"log"
 )
 
 func main() {
-	if err := config.InitConfig(".env"); err != nil {
+	if err := configs.InitConfig(".env"); err != nil {
 		log.Fatalf("Error initing config: %v\n", err)
 		return
 	}
