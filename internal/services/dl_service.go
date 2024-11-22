@@ -11,14 +11,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type DLService struct {
-	db *gorm.DB
-}
-
-func (s *DLService) InitService(db *gorm.DB) {
-	s.db = db
-}
-
 func (s *DLService) applyDLCreation(req *dl.InsertRequest) (*dtos.DLDto, error) {
 	dl := models.DL{
 		Code:       req.Code,

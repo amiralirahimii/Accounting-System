@@ -6,7 +6,17 @@ import (
 	"accountingsystem/internal/mappers"
 	"accountingsystem/internal/requests/dl"
 	"log"
+
+	"gorm.io/gorm"
 )
+
+type DLService struct {
+	db *gorm.DB
+}
+
+func (s *DLService) InitService(db *gorm.DB) {
+	s.db = db
+}
 
 func (s *DLService) CreateDL(req *dl.InsertRequest) (*dtos.DLDto, error) {
 	if err := s.validateDLInsertRequest(req); err != nil {
