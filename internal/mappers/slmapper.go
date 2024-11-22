@@ -10,6 +10,7 @@ func ToSlDto(sl *models.SL) *dtos.SLDto {
 		ID:         sl.ID,
 		Code:       sl.Code,
 		Title:      sl.Title,
+		HasDL:      sl.HasDL,
 		RowVersion: sl.RowVersion,
 	}
 }
