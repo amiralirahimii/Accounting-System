@@ -159,13 +159,13 @@ func (s *DLService) validateDLDeleteRequest(req *dl.DeleteRequest) (*models.DL, 
 	if err := s.validateVersion(req.Version, targetDL.RowVersion); err != nil {
 		return nil, err
 	}
-	if err := s.validateDLHasNoRefrences(req.ID); err != nil {
+	if err := s.validateDLHasNoReferences(req.ID); err != nil {
 		return nil, err
 	}
 	return targetDL, nil
 }
 
-func (s *DLService) validateDLHasNoRefrences(id int) error {
+func (s *DLService) validateDLHasNoReferences(id int) error {
 	var VoucherItemRefrencingThisDL models.VoucherItem
 	if err := db.DB.Where("dl_id = ?", id).First(&VoucherItemRefrencingThisDL).Error; err == nil {
 		return constants.ErrThereIsRefrenceToDL
