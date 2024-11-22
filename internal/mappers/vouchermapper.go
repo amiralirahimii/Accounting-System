@@ -5,7 +5,7 @@ import (
 	"accountingsystem/internal/models"
 )
 
-func ToVoucherDto(voucher *models.Voucher, voucherItems []models.VoucherItem) *dtos.VoucherDto {
+func ToVoucherWithItemsDto(voucher *models.Voucher, voucherItems []models.VoucherItem) *dtos.VoucherWithItemsDto {
 	voucherItemDtos := make([]dtos.VoucherItemDto, len(voucherItems))
 	for i, item := range voucherItems {
 		voucherItemDtos[i] = dtos.VoucherItemDto{
@@ -17,10 +17,18 @@ func ToVoucherDto(voucher *models.Voucher, voucherItems []models.VoucherItem) *d
 		}
 	}
 
-	return &dtos.VoucherDto{
+	return &dtos.VoucherWithItemsDto{
 		ID:           voucher.ID,
 		Number:       voucher.Number,
 		RowVersion:   voucher.RowVersion,
 		VoucherItems: voucherItemDtos,
+	}
+}
+
+func ToVoucherDto(voucher *models.Voucher) *dtos.VoucherDto {
+	return &dtos.VoucherDto{
+		ID:         voucher.ID,
+		Number:     voucher.Number,
+		RowVersion: voucher.RowVersion,
 	}
 }
