@@ -4,7 +4,6 @@ import (
 	"accountingsystem/config"
 	"accountingsystem/db"
 	"accountingsystem/internal/dtos"
-	"accountingsystem/internal/models"
 	"accountingsystem/internal/requests/dl"
 	"accountingsystem/internal/requests/sl"
 	"log"
@@ -43,7 +42,7 @@ func generateRandomInt64() int {
 	return int(seededRand.Uint64() & 0x7FFFFFFFFFFFFFFF)
 }
 
-func createRandomSL(s *SLService, hasDL bool) (*models.SL, error) {
+func createRandomSL(s *SLService, hasDL bool) (*dtos.SLDto, error) {
 	randomCode := "SL" + generateRandomString(20)
 	randomTitle := "Test" + generateRandomString(20)
 	req := &sl.InsertRequest{

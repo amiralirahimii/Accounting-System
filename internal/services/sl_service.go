@@ -3,6 +3,8 @@ package services
 import (
 	"accountingsystem/db"
 	"accountingsystem/internal/constants"
+	"accountingsystem/internal/dtos"
+	"accountingsystem/internal/mappers"
 	"accountingsystem/internal/models"
 	"accountingsystem/internal/requests/sl"
 	"errors"
@@ -13,7 +15,7 @@ import (
 
 type SLService struct{}
 
-func (s *SLService) CreateSL(req *sl.InsertRequest) (*models.SL, error) {
+func (s *SLService) CreateSL(req *sl.InsertRequest) (*dtos.SLDto, error) {
 	if req.Code == "" || len(req.Code) > 64 {
 		return nil, constants.ErrCodeEmptyOrTooLong
 	}
@@ -45,10 +47,10 @@ func (s *SLService) CreateSL(req *sl.InsertRequest) (*models.SL, error) {
 		return nil, err
 	}
 
-	return &sl, nil
+	return mappers.ToSlDto(&sl), nil
 }
 
-func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*models.SL, error) {
+func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*dtos.SLDto, error) {
 	if req.Code == "" || len(req.Code) > 64 {
 		return nil, constants.ErrCodeEmptyOrTooLong
 	}
@@ -96,7 +98,7 @@ func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*models.SL, error) {
 		return nil, err
 	}
 
-	return &targetSL, nil
+	return mappers.ToSlDto(&targetSL), nil
 }
 
 func (s *SLService) DeleteSL(req *sl.DeleteRequest) error {
@@ -125,7 +127,7 @@ func (s *SLService) DeleteSL(req *sl.DeleteRequest) error {
 	return nil
 }
 
-func (s *SLService) GetSL(req *sl.GetRequest) (*models.SL, error) {
+func (s *SLService) GetSL(req *sl.GetRequest) (*dtos.SLDto, error) {
 	var sl models.SL
 	if err := db.DB.Where("id = ?", req.ID).First(&sl).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -135,5 +137,5 @@ func (s *SLService) GetSL(req *sl.GetRequest) (*models.SL, error) {
 		return nil, constants.ErrUnexpectedError
 	}
 
-	return &sl, nil
+	return mappers.ToSlDto(&sl), nil
 }
