@@ -35,6 +35,16 @@ func (s *DLService) validateDLInsertRequest(req *dl.InsertRequest) error {
 	return nil
 }
 
+func (s *DLService) validateCodeAndTitleLength(code string, title string) error {
+	if code == "" || len(code) > 64 {
+		return constants.ErrCodeEmptyOrTooLong
+	}
+	if title == "" || len(title) > 64 {
+		return constants.ErrTitleEmptyOrTooLong
+	}
+	return nil
+}
+
 func (s *DLService) validateCodeAndTitleUnique(code string, title string) error {
 	var existingDL models.DL
 	if err := s.db.Where("code = ? OR title = ?", code, title).First(&existingDL).Error; err == nil {
@@ -46,16 +56,6 @@ func (s *DLService) validateCodeAndTitleUnique(code string, title string) error 
 		}
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
-	}
-	return nil
-}
-
-func (s *DLService) validateCodeAndTitleLength(code string, title string) error {
-	if code == "" || len(code) > 64 {
-		return constants.ErrCodeEmptyOrTooLong
-	}
-	if title == "" || len(title) > 64 {
-		return constants.ErrTitleEmptyOrTooLong
 	}
 	return nil
 }
