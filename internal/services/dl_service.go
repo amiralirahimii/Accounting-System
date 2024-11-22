@@ -7,7 +7,6 @@ import (
 	"accountingsystem/internal/models"
 	"accountingsystem/internal/requests/dl"
 	"errors"
-	"log"
 
 	"gorm.io/gorm"
 )
@@ -20,11 +19,7 @@ func (s *DLService) InitService(db *gorm.DB) {
 	s.db = db
 }
 
-func (s *DLService) CreateDL(req *dl.InsertRequest) (*dtos.DLDto, error) {
-	if err := s.validateDLInsertRequest(req); err != nil {
-		return nil, err
-	}
-
+func (s *DLService) applyDLCreation(req *dl.InsertRequest) (*dtos.DLDto, error) {
 	dl := models.DL{
 		Code:       req.Code,
 		Title:      req.Title,
@@ -58,8 +53,7 @@ func (s *DLService) validateCodeAndTitleUnique(code string, title string) error 
 			return constants.ErrTitleAlreadyExists
 		}
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Printf("unexpected error while checking for duplicates: %v", err)
-		return constants.ErrUnexpectedError
+		return err
 	}
 	return nil
 }
@@ -74,12 +68,7 @@ func (s *DLService) validateCodeAndTitleLength(code string, title string) error 
 	return nil
 }
 
-func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*dtos.DLDto, error) {
-	targetDL, err := s.validateDLUpdateRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *DLService) applyDLUpdate(req *dl.UpdateRequest, targetDL *models.DL) (*dtos.DLDto, error) {
 	targetDL.Code = req.Code
 	targetDL.Title = req.Title
 	targetDL.RowVersion++
@@ -117,8 +106,7 @@ func (s *DLService) validateCodeAndTitleUniqueWithDifferentId(code string, title
 			return constants.ErrTitleAlreadyExists
 		}
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Printf("unexpected error while checking for duplicates: %v", err)
-		return constants.ErrUnexpectedError
+		return err
 	}
 	return nil
 }
@@ -136,23 +124,15 @@ func (s *DLService) validateDLExists(id int) (*models.DL, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, constants.ErrDLNotFound
 		}
-		log.Printf("unexpected error while finding DL: %v", err)
-		return nil, constants.ErrUnexpectedError
+		return nil, err
 	}
 	return &targetDL, nil
 }
 
-func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
-	targetDL, err := s.validateDLDeleteRequest(req)
-	if err != nil {
+func (s *DLService) applyDLDeletion(targetDL *models.DL) error {
+	if err := s.db.Delete(&targetDL).Error; err != nil {
 		return err
 	}
-
-	if err := s.db.Delete(&targetDL).Error; err != nil {
-		log.Printf("unexpected error while deleting DL: %v", err)
-		return constants.ErrUnexpectedError
-	}
-
 	return nil
 }
 
@@ -176,15 +156,6 @@ func (s *DLService) validateDLHasNoReferences(id int) error {
 		return constants.ErrThereIsRefrenceToDL
 	}
 	return nil
-}
-
-func (s *DLService) GetDL(req *dl.GetRequest) (*dtos.DLDto, error) {
-	targetDL, err := s.validateDLGetRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
-	return mappers.ToDLDto(targetDL), nil
 }
 
 func (s *DLService) validateDLGetRequest(req *dl.GetRequest) (*models.DL, error) {
