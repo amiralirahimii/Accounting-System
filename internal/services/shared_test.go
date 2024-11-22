@@ -11,13 +11,15 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-var dlService DLService
-var slService SLService
-var voucherService VoucherService
+var dlService *DLService
+var slService *SLService
+var voucherService *VoucherService
 
 func TestMain(m *testing.M) {
 	err := config.InitConfig("../../.env.test")
@@ -30,11 +32,19 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to connect to the test database: %v", err)
 	}
 
-	dlService = DLService{db: theDB}
-	slService = SLService{db: theDB}
-	voucherService = VoucherService{db: theDB}
+	InitServices(theDB)
 
 	os.Exit(m.Run())
+}
+
+func InitServices(theDB *gorm.DB) {
+	dlService = &DLService{}
+	slService = &SLService{}
+	voucherService = &VoucherService{}
+
+	dlService.InitService(theDB)
+	slService.InitService(theDB)
+	voucherService.InitService(theDB)
 }
 
 func generateRandomString(length int) string {

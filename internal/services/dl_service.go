@@ -16,6 +16,10 @@ type DLService struct {
 	db *gorm.DB
 }
 
+func (s *DLService) InitService(db *gorm.DB) {
+	s.db = db
+}
+
 func (s *DLService) CreateDL(req *dl.InsertRequest) (*dtos.DLDto, error) {
 	if err := s.validateDLInsertRequest(req); err != nil {
 		return nil, err

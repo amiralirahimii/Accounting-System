@@ -17,6 +17,10 @@ type VoucherService struct {
 	db *gorm.DB
 }
 
+func (s *VoucherService) InitService(db *gorm.DB) {
+	s.db = db
+}
+
 func (s *VoucherService) CreateVoucher(req *voucher.InsertRequest) (*dtos.VoucherWithItemsDto, error) {
 	if err := s.validateInsertVoucherRequest(req); err != nil {
 		return nil, err
