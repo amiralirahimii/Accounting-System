@@ -13,42 +13,26 @@ import (
 	"gorm.io/gorm"
 )
 
-type VoucherService struct {
-	db *gorm.DB
-}
-
-func (s *VoucherService) InitService(db *gorm.DB) {
-	s.db = db
-}
-
-func (s *VoucherService) CreateVoucher(req *voucher.InsertRequest) (*dtos.VoucherWithItemsDto, error) {
-	if err := s.validateInsertVoucherRequest(req); err != nil {
-		return nil, err
-	}
-
+func (s *VoucherService) applyVoucherCreation(req *voucher.InsertRequest) (*dtos.VoucherWithItemsDto, error) {
 	tx := s.db.Begin()
 	if tx.Error != nil {
-		log.Printf("Error starting transaction: %v", tx.Error)
-		return nil, constants.ErrUnexpectedError
+		return nil, tx.Error
 	}
 
 	voucher, err := s.insertVoucher(tx, req.Number)
 	if err != nil {
 		tx.Rollback()
-		log.Printf("Error inserting voucher: %v", err)
-		return nil, constants.ErrUnexpectedError
+		return nil, err
 	}
 
 	voucherItems, err := s.insertVoucherItems(tx, voucher.ID, req.VoucherItems)
 	if err != nil {
 		tx.Rollback()
-		log.Printf("Error inserting voucher items: %v", err)
-		return nil, constants.ErrUnexpectedError
+		return nil, err
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		log.Printf("Error committing transaction: %v", err)
-		return nil, constants.ErrUnexpectedError
+		return nil, err
 	}
 
 	return mappers.ToVoucherWithItemsDto(voucher, voucherItems), nil
@@ -135,8 +119,7 @@ func (s *VoucherService) validateVoucherNumberIsUnique(number string) error {
 	if err := s.db.Where("number = ?", number).First(&existingVoucher).Error; err == nil {
 		return constants.ErrVoucherNumberExists
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Printf("Unexpected error while checking voucher number: %v", err)
-		return constants.ErrUnexpectedError
+		return err
 	}
 	return nil
 }
@@ -169,8 +152,7 @@ func (s *VoucherService) insertVoucherItems(tx *gorm.DB, voucherID int, items []
 
 	if len(voucherItems) > 0 {
 		if err := tx.Create(&voucherItems).Error; err != nil {
-			log.Printf("Error batch inserting voucher items: %v", err)
-			return nil, constants.ErrUnexpectedError
+			return nil, err
 		}
 	}
 
@@ -209,8 +191,7 @@ func (s *VoucherService) validateSLExists(SLID int) (*models.SL, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, constants.ErrSLNotFound
 		}
-		log.Printf("Unexpected error while finding SL: %v", err)
-		return nil, constants.ErrUnexpectedError
+		return nil, err
 	}
 	return &sl, nil
 }
@@ -221,8 +202,7 @@ func (s *VoucherService) validateDLExists(DLID int) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return constants.ErrDLNotFound
 		}
-		log.Printf("Unexpected error while finding DL: %v", err)
-		return constants.ErrUnexpectedError
+		return err
 	}
 	return nil
 }
@@ -236,21 +216,10 @@ func (s *VoucherService) validateDLRequirement(SLhasDL bool, DLID *int) error {
 	return nil
 }
 
-func (s *VoucherService) UpdateVoucher(req *voucher.UpdateRequest) (*dtos.VoucherDto, error) {
-	targetVoucher, err := s.validateUpdateVoucherRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *VoucherService) applyVoucherUpdate(req *voucher.UpdateRequest, targetVoucher *models.Voucher) (*dtos.VoucherDto, error) {
 	tx := s.db.Begin()
 	if tx.Error != nil {
-		log.Printf("Error starting transaction: %v", tx.Error)
-		return nil, constants.ErrUnexpectedError
-	}
-
-	if err := s.applyVoucherItemChanges(tx, req, targetVoucher); err != nil {
-		tx.Rollback()
-		return nil, err
+		return nil, tx.Error
 	}
 
 	targetVoucher.Number = req.Number
@@ -258,13 +227,16 @@ func (s *VoucherService) UpdateVoucher(req *voucher.UpdateRequest) (*dtos.Vouche
 
 	if err := tx.Save(targetVoucher).Error; err != nil {
 		tx.Rollback()
-		log.Printf("Error updating voucher: %v", err)
-		return nil, constants.ErrUnexpectedError
+		return nil, err
+	}
+
+	if err := s.applyVoucherItemChanges(tx, req, targetVoucher); err != nil {
+		tx.Rollback()
+		return nil, err
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		log.Printf("Error committing transaction: %v", err)
-		return nil, constants.ErrUnexpectedError
+		return nil, err
 	}
 
 	return mappers.ToVoucherDto(targetVoucher), nil
@@ -303,8 +275,7 @@ func (s *VoucherService) validateVoucherExists(id int) (*models.Voucher, error) 
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, constants.ErrVoucherNotFound
 		}
-		log.Printf("Unexpected error while finding voucher: %v", err)
-		return nil, constants.ErrUnexpectedError
+		return nil, err
 	}
 	return &existingVoucher, nil
 }
@@ -356,8 +327,7 @@ func (s *VoucherService) validateVoucherItemExists(itemID int) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return constants.ErrVoucherItemNotFound
 		}
-		log.Printf("Unexpected error while finding voucher item: %v", err)
-		return constants.ErrUnexpectedError
+		return err
 	}
 	return nil
 }
@@ -415,8 +385,7 @@ func (s *VoucherService) validateVoucherItemsCountInUpdateRequest(items voucher.
 	newItemsCount := len(items.Inserted) - len(items.Deleted)
 	var existingItemsCount int64 = 0
 	if err := s.db.Model(&models.VoucherItem{}).Where("voucher_id = ?", voucherID).Count(&existingItemsCount).Error; err != nil {
-		log.Printf("Unexpected error while counting voucher items: %v", err)
-		return constants.ErrUnexpectedError
+		return err
 	}
 
 	if err := s.validateCorrectVoucherItemNumber(int(existingItemsCount) + newItemsCount); err != nil {
@@ -445,8 +414,7 @@ func (s *VoucherService) deleteVoucherItems(tx *gorm.DB, itemIDs []int) error {
 	}
 
 	if err := tx.Where("id IN ?", itemIDs).Delete(&models.VoucherItem{}).Error; err != nil {
-		log.Printf("Error deleting voucher items: %v", err)
-		return constants.ErrUnexpectedError
+		return err
 	}
 	return nil
 }
@@ -470,22 +438,15 @@ func (s *VoucherService) updateVoucherItem(tx *gorm.DB, item voucher.VoucherItem
 	currentItem.Credit = item.Credit
 
 	if err := tx.Save(&currentItem).Error; err != nil {
-		log.Printf("Error updating voucher item: %v", err)
-		return constants.ErrUnexpectedError
+		return err
 	}
 	return nil
 }
 
-func (s *VoucherService) DeleteVoucher(req *voucher.DeleteRequest) error {
-	targetVoucher, err := s.validateDeleteVoucherRequest(req)
-	if err != nil {
-		return err
-	}
-
+func (s *VoucherService) applyVoucherDeletion(targetVoucher *models.Voucher) error {
 	if err := s.db.Delete(&targetVoucher).Error; err != nil {
 		return constants.ErrUnexpectedError
 	}
-
 	return nil
 }
 
@@ -500,16 +461,10 @@ func (s *VoucherService) validateDeleteVoucherRequest(req *voucher.DeleteRequest
 	return targetVoucher, nil
 }
 
-func (s *VoucherService) GetVoucher(req *voucher.GetRequest) (*dtos.VoucherWithItemsDto, error) {
-	targetVoucher, err := s.validateGetVoucherRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *VoucherService) applyVoucherGet(targetVoucher *models.Voucher) (*dtos.VoucherWithItemsDto, error) {
 	var voucherItems []models.VoucherItem
 	if err := s.db.Where("voucher_id = ?", targetVoucher.ID).Find(&voucherItems).Error; err != nil {
-		log.Printf("unexpected error while finding voucher items: %v", err)
-		return nil, constants.ErrUnexpectedError
+		return nil, err
 	}
 
 	return mappers.ToVoucherWithItemsDto(targetVoucher, voucherItems), nil
