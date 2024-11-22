@@ -3,6 +3,8 @@ package services
 import (
 	"accountingsystem/db"
 	"accountingsystem/internal/constants"
+	"accountingsystem/internal/dtos"
+	"accountingsystem/internal/mappers"
 	"accountingsystem/internal/models"
 	"accountingsystem/internal/requests/dl"
 	"errors"
@@ -13,7 +15,7 @@ import (
 
 type DLService struct{}
 
-func (s *DLService) CreateDL(req *dl.InsertRequest) (*models.DL, error) {
+func (s *DLService) CreateDL(req *dl.InsertRequest) (*dtos.DLDto, error) {
 	if req.Code == "" || len(req.Code) > 64 {
 		return nil, constants.ErrCodeEmptyOrTooLong
 	}
@@ -44,10 +46,10 @@ func (s *DLService) CreateDL(req *dl.InsertRequest) (*models.DL, error) {
 		return nil, err
 	}
 
-	return &dl, nil
+	return mappers.ToDLDto(&dl), nil
 }
 
-func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*models.DL, error) {
+func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*dtos.DLDto, error) {
 	if req.Code == "" || len(req.Code) > 64 {
 		return nil, constants.ErrCodeEmptyOrTooLong
 	}
@@ -88,7 +90,7 @@ func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*models.DL, error) {
 		return nil, err
 	}
 
-	return &targetDL, nil
+	return mappers.ToDLDto(&targetDL), nil
 }
 
 func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
@@ -118,7 +120,7 @@ func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
 	return nil
 }
 
-func (s *DLService) GetDL(req *dl.GetRequest) (*models.DL, error) {
+func (s *DLService) GetDL(req *dl.GetRequest) (*dtos.DLDto, error) {
 	var targetDL models.DL
 	if err := db.DB.Where("id = ?", req.ID).First(&targetDL).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -128,5 +130,5 @@ func (s *DLService) GetDL(req *dl.GetRequest) (*models.DL, error) {
 		return nil, constants.ErrUnexpectedError
 	}
 
-	return &targetDL, nil
+	return mappers.ToDLDto(&targetDL), nil
 }

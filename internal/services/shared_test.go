@@ -3,6 +3,7 @@ package services
 import (
 	"accountingsystem/config"
 	"accountingsystem/db"
+	"accountingsystem/internal/dtos"
 	"accountingsystem/internal/models"
 	"accountingsystem/internal/requests/dl"
 	"accountingsystem/internal/requests/sl"
@@ -53,7 +54,7 @@ func createRandomSL(s *SLService, hasDL bool) (*models.SL, error) {
 	return s.CreateSL(req)
 }
 
-func createRandomDL(s *DLService) (*models.DL, error) {
+func createRandomDL(s *DLService) (*dtos.DLDto, error) {
 	randomCode := "DL" + generateRandomString(20)
 	randomTitle := "Test" + generateRandomString(20)
 	req := &dl.InsertRequest{
