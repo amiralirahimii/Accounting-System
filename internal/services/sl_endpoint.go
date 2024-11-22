@@ -23,13 +23,13 @@ func (s *SLService) CreateSL(req *sl.InsertRequest) (*dtos.SLDto, error) {
 		return nil, err
 	}
 
-	sl, err := s.applySLCreation(req)
+	slDto, err := s.applySLCreation(req)
 	if err != nil {
 		log.Printf("unexpected error while creating SL: %v", err)
 		return nil, constants.ErrUnexpectedError
 	}
 
-	return sl, nil
+	return slDto, nil
 }
 
 func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*dtos.SLDto, error) {
@@ -38,13 +38,13 @@ func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*dtos.SLDto, error) {
 		return nil, err
 	}
 
-	sl, err := s.applySLUpdate(req, targetSL)
+	slDto, err := s.applySLUpdate(req, targetSL)
 	if err != nil {
 		log.Printf("unexpected error while updating SL: %v", err)
 		return nil, constants.ErrUnexpectedError
 	}
 
-	return sl, nil
+	return slDto, nil
 }
 
 func (s *SLService) DeleteSL(req *sl.DeleteRequest) error {
