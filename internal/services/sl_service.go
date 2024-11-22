@@ -16,24 +16,8 @@ import (
 type SLService struct{}
 
 func (s *SLService) CreateSL(req *sl.InsertRequest) (*dtos.SLDto, error) {
-	if req.Code == "" || len(req.Code) > 64 {
-		return nil, constants.ErrCodeEmptyOrTooLong
-	}
-	if req.Title == "" || len(req.Title) > 64 {
-		return nil, constants.ErrTitleEmptyOrTooLong
-	}
-
-	var existingSL models.SL
-	if err := db.DB.Where("code = ? OR title = ?", req.Code, req.Title).First(&existingSL).Error; err == nil {
-		if existingSL.Code == req.Code {
-			return nil, constants.ErrCodeAlreadyExists
-		}
-		if existingSL.Title == req.Title {
-			return nil, constants.ErrTitleAlreadyExists
-		}
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Printf("Unexpected error while checking for duplicates: %v", err)
-		return nil, constants.ErrUnexpectedError
+	if err := s.validateSLInsertRequest(req); err != nil {
+		return nil, err
 	}
 
 	sl := models.SL{
@@ -50,43 +34,46 @@ func (s *SLService) CreateSL(req *sl.InsertRequest) (*dtos.SLDto, error) {
 	return mappers.ToSlDto(&sl), nil
 }
 
-func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*dtos.SLDto, error) {
-	if req.Code == "" || len(req.Code) > 64 {
-		return nil, constants.ErrCodeEmptyOrTooLong
-	}
-	if req.Title == "" || len(req.Title) > 64 {
-		return nil, constants.ErrTitleEmptyOrTooLong
-	}
-
-	var targetSL models.SL
-	if err := db.DB.Where("id = ?", req.ID).First(&targetSL).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, constants.ErrSLNotFound
-		}
-		log.Printf("unexpected error while finding DL: %v", err)
-		return nil, constants.ErrUnexpectedError
-	}
-
-	if targetSL.RowVersion != req.Version {
-		return nil, constants.ErrVersionOutdated
-	}
-
-	var VoucherItemRefrencingThisSL models.VoucherItem
-	if err := db.DB.Where("sl_id = ?", targetSL.ID).First(&VoucherItemRefrencingThisSL).Error; err == nil {
-		return nil, constants.ErrThereIsRefrenceToSL
-	}
-
+func (s *SLService) validateCodeAndTitleUnique(code string, title string) error {
 	var existingSL models.SL
-	if err := db.DB.Where("code = ? OR title = ?", req.Code, req.Title).First(&existingSL).Error; err == nil {
-		if existingSL.Code == req.Code {
-			return nil, constants.ErrCodeAlreadyExists
+	if err := db.DB.Where("code = ? OR title = ?", code, title).First(&existingSL).Error; err == nil {
+		if existingSL.Code == code {
+			return constants.ErrCodeAlreadyExists
 		}
-		if existingSL.Title == req.Title {
-			return nil, constants.ErrTitleAlreadyExists
+		if existingSL.Title == title {
+			return constants.ErrTitleAlreadyExists
 		}
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Printf("Unexpected error while checking for duplicates: %v", err)
-		return nil, constants.ErrUnexpectedError
+		log.Printf("unexpected error while checking for duplicates: %v", err)
+		return constants.ErrUnexpectedError
+	}
+	return nil
+}
+
+func (s *SLService) validateSLInsertRequest(req *sl.InsertRequest) error {
+	if err := s.validateCodeAndTitleLength(req.Code, req.Title); err != nil {
+		return err
+	}
+	if err := s.validateCodeAndTitleUnique(req.Code, req.Title); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SLService) validateCodeAndTitleLength(code string, title string) error {
+	if code == "" || len(code) > 64 {
+		return constants.ErrCodeEmptyOrTooLong
+	}
+	if title == "" || len(title) > 64 {
+		return constants.ErrTitleEmptyOrTooLong
+	}
+	return nil
+}
+
+func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*dtos.SLDto, error) {
+	targetSL, err := s.validateSLUpdateRequest(req)
+	if err != nil {
+		return nil, err
 	}
 
 	targetSL.Code = req.Code
@@ -94,30 +81,80 @@ func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*dtos.SLDto, error) {
 	targetSL.HasDL = req.HasDL
 	targetSL.RowVersion++
 
-	if err := db.DB.Save(&targetSL).Error; err != nil {
+	if err := db.DB.Save(targetSL).Error; err != nil {
 		return nil, err
 	}
 
-	return mappers.ToSlDto(&targetSL), nil
+	return mappers.ToSlDto(targetSL), nil
+}
+
+func (s *SLService) validateSLUpdateRequest(req *sl.UpdateRequest) (*models.SL, error) {
+	if err := s.validateCodeAndTitleLength(req.Code, req.Title); err != nil {
+		return nil, err
+	}
+	targetSL, err := s.validateSLExists(req.ID)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.validateVersion(req.Version, targetSL.RowVersion); err != nil {
+		return nil, err
+	}
+	if err := s.validateSLHasNoReferences(req.ID); err != nil {
+		return nil, err
+	}
+	if err := s.validateCodeAndTitleUniqueWithDifferentId(req.Code, req.Title, req.ID); err != nil {
+		return nil, err
+	}
+	return targetSL, nil
+}
+
+func (s *SLService) validateCodeAndTitleUniqueWithDifferentId(code string, title string, id int) error {
+	var existingSL models.SL
+	if err := db.DB.Where("(code = ? OR title = ?) AND id != ?", code, title, id).First(&existingSL).Error; err == nil {
+		if existingSL.Code == code {
+			return constants.ErrCodeAlreadyExists
+		}
+		if existingSL.Title == title {
+			return constants.ErrTitleAlreadyExists
+		}
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		log.Printf("unexpected error while checking for duplicates: %v", err)
+		return constants.ErrUnexpectedError
+	}
+	return nil
+}
+
+func (s *SLService) validateSLHasNoReferences(id int) error {
+	var VoucherItemRefrencingThisSL models.VoucherItem
+	if err := db.DB.Where("sl_id = ?", id).First(&VoucherItemRefrencingThisSL).Error; err == nil {
+		return constants.ErrThereIsRefrenceToSL
+	}
+	return nil
+}
+
+func (s *SLService) validateVersion(reqVersion int, targetVersion int) error {
+	if reqVersion != targetVersion {
+		return constants.ErrVersionOutdated
+	}
+	return nil
+}
+
+func (s *SLService) validateSLExists(id int) (*models.SL, error) {
+	var targetSL models.SL
+	if err := db.DB.Where("id = ?", id).First(&targetSL).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, constants.ErrSLNotFound
+		}
+		log.Printf("unexpected error while finding SL: %v", err)
+		return nil, constants.ErrUnexpectedError
+	}
+	return &targetSL, nil
 }
 
 func (s *SLService) DeleteSL(req *sl.DeleteRequest) error {
-	var targetSL models.SL
-	if err := db.DB.Where("id = ?", req.ID).First(&targetSL).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return constants.ErrSLNotFound
-		}
-		log.Printf("unexpected error while finding SL: %v", err)
-		return constants.ErrUnexpectedError
-	}
-
-	if targetSL.RowVersion != req.Version {
-		return constants.ErrVersionOutdated
-	}
-
-	var VoucherItemRefrencingThisSL models.VoucherItem
-	if err := db.DB.Where("sl_id = ?", targetSL.ID).First(&VoucherItemRefrencingThisSL).Error; err == nil {
-		return constants.ErrThereIsRefrenceToSL
+	targetSL, err := s.validateSLDeleteRequest(req)
+	if err != nil {
+		return err
 	}
 
 	if err := db.DB.Delete(&targetSL).Error; err != nil {
@@ -127,15 +164,33 @@ func (s *SLService) DeleteSL(req *sl.DeleteRequest) error {
 	return nil
 }
 
+func (s *SLService) validateSLDeleteRequest(req *sl.DeleteRequest) (*models.SL, error) {
+	targetSL, err := s.validateSLExists(req.ID)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.validateVersion(req.Version, targetSL.RowVersion); err != nil {
+		return nil, err
+	}
+	if err := s.validateSLHasNoReferences(req.ID); err != nil {
+		return nil, err
+	}
+	return targetSL, nil
+}
+
 func (s *SLService) GetSL(req *sl.GetRequest) (*dtos.SLDto, error) {
-	var sl models.SL
-	if err := db.DB.Where("id = ?", req.ID).First(&sl).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, constants.ErrSLNotFound
-		}
-		log.Printf("unexpected error while finding SL: %v", err)
-		return nil, constants.ErrUnexpectedError
+	targetSL, err := s.validateSLGetRequest(req)
+	if err != nil {
+		return nil, err
 	}
 
-	return mappers.ToSlDto(&sl), nil
+	return mappers.ToSlDto(targetSL), nil
+}
+
+func (s *SLService) validateSLGetRequest(req *sl.GetRequest) (*models.SL, error) {
+	targetSL, err := s.validateSLExists(req.ID)
+	if err != nil {
+		return nil, err
+	}
+	return targetSL, nil
 }
