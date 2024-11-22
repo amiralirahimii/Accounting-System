@@ -79,13 +79,7 @@ func (s *VoucherService) validateCorrectVoucherItemNumber(number int) error {
 }
 
 func (s *VoucherService) validateVoucherItemInsertCreditBalance(items []voucher.VoucherItemInsertDetail) error {
-	totalDebit := 0
-	totalCredit := 0
-
-	for _, item := range items {
-		totalDebit += item.Debit
-		totalCredit += item.Credit
-	}
+	totalDebit, totalCredit := s.calculateInsertedBalances(items)
 
 	if totalDebit != totalCredit {
 		return constants.ErrDebitCreditMismatch
@@ -333,9 +327,9 @@ func (s *VoucherService) validateVoucherItemExists(itemID int) error {
 }
 
 func (s *VoucherService) validateVoucherUpdateDebitCreditBalance(items voucher.VoucherItemsUpdate) error {
-	totalDebitAddedInInsert, totalCreditAddedInInsert := s.calculateInsertedBalances(items)
-	totalDebitAddedInUpdate, totalCreditAddedInUpdate := s.calculateUpdatedBalances(items)
-	totalDebitAddedInDelete, totalCreditAddedInDelete := s.calculateDeletedBalances(items)
+	totalDebitAddedInInsert, totalCreditAddedInInsert := s.calculateInsertedBalances(items.Inserted)
+	totalDebitAddedInUpdate, totalCreditAddedInUpdate := s.calculateUpdatedBalances(items.Updated)
+	totalDebitAddedInDelete, totalCreditAddedInDelete := s.calculateDeletedBalances(items.Deleted)
 
 	totalDebitAdded := totalDebitAddedInInsert + totalDebitAddedInUpdate + totalDebitAddedInDelete
 	totalCreditAdded := totalCreditAddedInInsert + totalCreditAddedInUpdate + totalCreditAddedInDelete
@@ -347,20 +341,20 @@ func (s *VoucherService) validateVoucherUpdateDebitCreditBalance(items voucher.V
 	return nil
 }
 
-func (s *VoucherService) calculateInsertedBalances(items voucher.VoucherItemsUpdate) (int, int) {
+func (s *VoucherService) calculateInsertedBalances(items []voucher.VoucherItemInsertDetail) (int, int) {
 	totalDebit := 0
 	totalCredit := 0
-	for _, item := range items.Inserted {
+	for _, item := range items {
 		totalDebit += item.Debit
 		totalCredit += item.Credit
 	}
 	return totalDebit, totalCredit
 }
 
-func (s *VoucherService) calculateUpdatedBalances(items voucher.VoucherItemsUpdate) (int, int) {
+func (s *VoucherService) calculateUpdatedBalances(items []voucher.VoucherItemUpdateDetail) (int, int) {
 	totalDebit := 0
 	totalCredit := 0
-	for _, item := range items.Updated {
+	for _, item := range items {
 		var currentItem models.VoucherItem
 		s.db.First(&currentItem, item.ID)
 		totalDebit += item.Debit - currentItem.Debit
@@ -369,10 +363,10 @@ func (s *VoucherService) calculateUpdatedBalances(items voucher.VoucherItemsUpda
 	return totalDebit, totalCredit
 }
 
-func (s *VoucherService) calculateDeletedBalances(items voucher.VoucherItemsUpdate) (int, int) {
+func (s *VoucherService) calculateDeletedBalances(items []int) (int, int) {
 	totalDebit := 0
 	totalCredit := 0
-	for _, itemID := range items.Deleted {
+	for _, itemID := range items {
 		var currentItem models.VoucherItem
 		s.db.First(&currentItem, itemID)
 		totalDebit -= currentItem.Debit
