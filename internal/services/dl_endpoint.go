@@ -23,13 +23,13 @@ func (s *DLService) CreateDL(req *dl.InsertRequest) (*dtos.DLDto, error) {
 		return nil, err
 	}
 
-	dl, err := s.applyDLCreation(req)
+	dlDto, err := s.applyDLCreation(req)
 	if err != nil {
 		log.Printf("unexpected error while creating DL: %v", err)
 		return nil, constants.ErrUnexpectedError
 	}
 
-	return dl, nil
+	return dlDto, nil
 }
 
 func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*dtos.DLDto, error) {
@@ -38,13 +38,13 @@ func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*dtos.DLDto, error) {
 		return nil, err
 	}
 
-	dl, err := s.applyDLUpdate(req, targetDL)
+	dlDto, err := s.applyDLUpdate(req, targetDL)
 	if err != nil {
 		log.Printf("unexpected error while updating DL: %v", err)
 		return nil, constants.ErrUnexpectedError
 	}
 
-	return dl, nil
+	return dlDto, nil
 }
 
 func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
