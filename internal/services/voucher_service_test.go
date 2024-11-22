@@ -10,13 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
-
 func Test_CreateVoucher_Succeeds_ReferencingDLAndNonReferencingDLVoucherItems(t *testing.T) {
-	slWithDL, err :=   createRandomSL(true)
+	slWithDL, err := createRandomSL(true)
 	require.Nil(t, err)
 
-	slWithoutDL, err :=   createRandomSL(false)
+	slWithoutDL, err := createRandomSL(false)
 	require.Nil(t, err)
 
 	dl, err := createRandomDL()
@@ -233,10 +231,10 @@ func Test_CreateVoucher_ReturnsErrDebitCreditMismatch_WithMismatchedDebitCreditS
 }
 
 func Test_CreateVoucher_ReturnsErrVoucherNumberExists_WithExistingVoucherNumber(t *testing.T) {
-	slWithDL, err :=   createRandomSL(true)
+	slWithDL, err := createRandomSL(true)
 	require.Nil(t, err)
 
-	slWithoutDL, err :=   createRandomSL(false)
+	slWithoutDL, err := createRandomSL(false)
 	require.Nil(t, err)
 
 	dl, err := createRandomDL()
@@ -319,7 +317,7 @@ func Test_CreateVoucher_ReturnsErrSLNotFound_WithInvalidSLID(t *testing.T) {
 }
 
 func Test_CreateVoucher_ReturnsErrDLIDRequired_WhenSLRequiresDLButNoDLProvided(t *testing.T) {
-	slWithDL, err :=   createRandomSL(true)
+	slWithDL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	items := []voucher.VoucherItemInsertDetail{
@@ -349,7 +347,7 @@ func Test_CreateVoucher_ReturnsErrDLIDRequired_WhenSLRequiresDLButNoDLProvided(t
 }
 
 func Test_CreateVoucher_ReturnsErrDLNotAllowed_WhenSLDoesNotRequireDLButDLProvided(t *testing.T) {
-	slWithoutDL, err :=   createRandomSL(false)
+	slWithoutDL, err := createRandomSL(false)
 	require.Nil(t, err)
 
 	dl, err := createRandomDL()
@@ -382,7 +380,7 @@ func Test_CreateVoucher_ReturnsErrDLNotAllowed_WhenSLDoesNotRequireDLButDLProvid
 }
 
 func Test_CreateVoucher_ReturnsErrDLNotFound_WithInvalidDLID(t *testing.T) {
-	slWithDL, err :=   createRandomSL(true)
+	slWithDL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	invalidDLID := generateRandomInt64()
@@ -414,12 +412,12 @@ func Test_CreateVoucher_ReturnsErrDLNotFound_WithInvalidDLID(t *testing.T) {
 }
 
 func createRandomVoucher() (*dtos.VoucherWithItemsDto, error) {
-	slWithDL, err :=   createRandomSL(true)
+	slWithDL, err := createRandomSL(true)
 	if err != nil {
 		return nil, err
 	}
 
-	slWithoutDL, err :=   createRandomSL(false)
+	slWithoutDL, err := createRandomSL(false)
 	if err != nil {
 		return nil, err
 	}
@@ -461,10 +459,10 @@ func Test_UpdateVoucher_Succeeds_WithValidRequest(t *testing.T) {
 	voucherDto, err := createRandomVoucher()
 	require.Nil(t, err)
 
-	SLWithDL, err :=   createRandomSL(true)
+	SLWithDL, err := createRandomSL(true)
 	require.Nil(t, err)
 
-	SLWithoutDL, err :=   createRandomSL(false)
+	SLWithoutDL, err := createRandomSL(false)
 	require.Nil(t, err)
 
 	DL, err := createRandomDL()
@@ -627,7 +625,7 @@ func Test_UpdateVoucher_ReturnsErrVersionOutdated_WithOutdatedRequest(t *testing
 	voucherDto, err := createRandomVoucher()
 	require.Nil(t, err)
 
-	SLWithDL, err :=   createRandomSL(true)
+	SLWithDL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	DL, err := createRandomDL()
@@ -711,7 +709,7 @@ func Test_UpdateVoucher_ReturnsErrDLIDRequired_WhenSLRequiresDLButNoDLProvidedIn
 	voucherDto, err := createRandomVoucher()
 	require.Nil(t, err)
 
-	slWithDL, err :=   createRandomSL(true)
+	slWithDL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	items := voucher.VoucherItemsUpdate{
@@ -751,7 +749,7 @@ func Test_UpdateVoucher_ReturnsErrDLNotAllowed_WhenSLDoesNotRequireDLButDLProvid
 	voucherDto, err := createRandomVoucher()
 	require.Nil(t, err)
 
-	slWithoutDL, err :=   createRandomSL(false)
+	slWithoutDL, err := createRandomSL(false)
 	require.Nil(t, err)
 
 	dl, err := createRandomDL()
@@ -863,7 +861,7 @@ func Test_UpdateVoucher_ReturnsErrDLIDRequired_WhenSLRequiresDLButNoDLProvidedIn
 	voucherDto, err := createRandomVoucher()
 	require.Nil(t, err)
 
-	slWithDL, err :=   createRandomSL(true)
+	slWithDL, err := createRandomSL(true)
 	require.Nil(t, err)
 
 	items := voucher.VoucherItemsUpdate{
@@ -898,7 +896,7 @@ func Test_UpdateVoucher_ReturnsErrDLNotAllowed_WhenSLDoesNotRequireDLButDLProvid
 	voucherDto, err := createRandomVoucher()
 	require.Nil(t, err)
 
-	slWithoutDL, err :=   createRandomSL(false)
+	slWithoutDL, err := createRandomSL(false)
 	require.Nil(t, err)
 
 	dl, err := createRandomDL()
@@ -1142,10 +1140,10 @@ func Test_DeleteVoucher_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing
 	voucherDto, err := createRandomVoucher()
 	require.Nil(t, err)
 
-	SLWithDL, err :=   createRandomSL(true)
+	SLWithDL, err := createRandomSL(true)
 	require.Nil(t, err)
 
-	SLWithoutDL, err :=   createRandomSL(false)
+	SLWithoutDL, err := createRandomSL(false)
 	require.Nil(t, err)
 
 	DL, err := createRandomDL()
