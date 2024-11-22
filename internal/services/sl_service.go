@@ -1,7 +1,6 @@
 package services
 
 import (
-	"accountingsystem/db"
 	"accountingsystem/internal/constants"
 	"accountingsystem/internal/dtos"
 	"accountingsystem/internal/mappers"
@@ -13,7 +12,9 @@ import (
 	"gorm.io/gorm"
 )
 
-type SLService struct{}
+type SLService struct {
+	db *gorm.DB
+}
 
 func (s *SLService) CreateSL(req *sl.InsertRequest) (*dtos.SLDto, error) {
 	if err := s.validateSLInsertRequest(req); err != nil {
@@ -27,7 +28,7 @@ func (s *SLService) CreateSL(req *sl.InsertRequest) (*dtos.SLDto, error) {
 		RowVersion: 0,
 	}
 
-	if err := db.DB.Create(&sl).Error; err != nil {
+	if err := s.db.Create(&sl).Error; err != nil {
 		return nil, err
 	}
 
@@ -36,7 +37,7 @@ func (s *SLService) CreateSL(req *sl.InsertRequest) (*dtos.SLDto, error) {
 
 func (s *SLService) validateCodeAndTitleUnique(code string, title string) error {
 	var existingSL models.SL
-	if err := db.DB.Where("code = ? OR title = ?", code, title).First(&existingSL).Error; err == nil {
+	if err := s.db.Where("code = ? OR title = ?", code, title).First(&existingSL).Error; err == nil {
 		if existingSL.Code == code {
 			return constants.ErrCodeAlreadyExists
 		}
@@ -81,7 +82,7 @@ func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*dtos.SLDto, error) {
 	targetSL.HasDL = req.HasDL
 	targetSL.RowVersion++
 
-	if err := db.DB.Save(targetSL).Error; err != nil {
+	if err := s.db.Save(targetSL).Error; err != nil {
 		return nil, err
 	}
 
@@ -110,7 +111,7 @@ func (s *SLService) validateSLUpdateRequest(req *sl.UpdateRequest) (*models.SL, 
 
 func (s *SLService) validateCodeAndTitleUniqueWithDifferentId(code string, title string, id int) error {
 	var existingSL models.SL
-	if err := db.DB.Where("(code = ? OR title = ?) AND id != ?", code, title, id).First(&existingSL).Error; err == nil {
+	if err := s.db.Where("(code = ? OR title = ?) AND id != ?", code, title, id).First(&existingSL).Error; err == nil {
 		if existingSL.Code == code {
 			return constants.ErrCodeAlreadyExists
 		}
@@ -126,7 +127,7 @@ func (s *SLService) validateCodeAndTitleUniqueWithDifferentId(code string, title
 
 func (s *SLService) validateSLHasNoReferences(id int) error {
 	var VoucherItemRefrencingThisSL models.VoucherItem
-	if err := db.DB.Where("sl_id = ?", id).First(&VoucherItemRefrencingThisSL).Error; err == nil {
+	if err := s.db.Where("sl_id = ?", id).First(&VoucherItemRefrencingThisSL).Error; err == nil {
 		return constants.ErrThereIsRefrenceToSL
 	}
 	return nil
@@ -141,7 +142,7 @@ func (s *SLService) validateVersion(reqVersion int, targetVersion int) error {
 
 func (s *SLService) validateSLExists(id int) (*models.SL, error) {
 	var targetSL models.SL
-	if err := db.DB.Where("id = ?", id).First(&targetSL).Error; err != nil {
+	if err := s.db.Where("id = ?", id).First(&targetSL).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, constants.ErrSLNotFound
 		}
@@ -157,7 +158,7 @@ func (s *SLService) DeleteSL(req *sl.DeleteRequest) error {
 		return err
 	}
 
-	if err := db.DB.Delete(&targetSL).Error; err != nil {
+	if err := s.db.Delete(&targetSL).Error; err != nil {
 		return err
 	}
 

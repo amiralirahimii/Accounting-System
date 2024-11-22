@@ -12,8 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
-
 func loadVars() (string, string, string, string, string, string, error) {
 	host, err := config.GetEnv("DB_HOST")
 	if err != nil {
@@ -54,29 +52,29 @@ func configureConnectionPool(sqlDB *sql.DB) {
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 }
 
-func Init() error {
+func Init() (*gorm.DB, error) {
 	host, user, password, dbName, port, sslMode, err := loadVars()
 	if err != nil {
 		log.Fatalf("Failed to load database variables: %v", err)
-		return err
+		return nil, err
 	}
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
 		host, user, password, dbName, port, sslMode)
 
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	DB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
-		return err
+		return nil, err
 	}
 
 	sqlDB, err := DB.DB()
 	if err != nil {
 		log.Fatalf("Failed to get sql.DB from GORM: %v", err)
-		return err
+		return nil, err
 	}
 
 	configureConnectionPool(sqlDB)
 
-	return nil
+	return DB, nil
 }

@@ -384,7 +384,6 @@ func Test_DeleteDL_ReturnsErrVersionOutdated_WithOutdatedVersion(t *testing.T) {
 }
 
 func Test_DeleteDL_ReturnsErrThereIsRefrenceToDL_WithExistingReference(t *testing.T) {
-	slService := SLService{}
 	slWithDL, err := slService.CreateSL(&sl.InsertRequest{
 		Code:  "SL" + generateRandomString(20),
 		Title: "SLWithDL" + generateRandomString(20),

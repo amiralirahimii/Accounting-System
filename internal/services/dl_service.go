@@ -1,7 +1,6 @@
 package services
 
 import (
-	"accountingsystem/db"
 	"accountingsystem/internal/constants"
 	"accountingsystem/internal/dtos"
 	"accountingsystem/internal/mappers"
@@ -13,7 +12,9 @@ import (
 	"gorm.io/gorm"
 )
 
-type DLService struct{}
+type DLService struct {
+	db *gorm.DB
+}
 
 func (s *DLService) CreateDL(req *dl.InsertRequest) (*dtos.DLDto, error) {
 	if err := s.validateDLInsertRequest(req); err != nil {
@@ -26,7 +27,7 @@ func (s *DLService) CreateDL(req *dl.InsertRequest) (*dtos.DLDto, error) {
 		RowVersion: 0,
 	}
 
-	if err := db.DB.Create(&dl).Error; err != nil {
+	if err := s.db.Create(&dl).Error; err != nil {
 		return nil, err
 	}
 
@@ -45,7 +46,7 @@ func (s *DLService) validateDLInsertRequest(req *dl.InsertRequest) error {
 
 func (s *DLService) validateCodeAndTitleUnique(code string, title string) error {
 	var existingDL models.DL
-	if err := db.DB.Where("code = ? OR title = ?", code, title).First(&existingDL).Error; err == nil {
+	if err := s.db.Where("code = ? OR title = ?", code, title).First(&existingDL).Error; err == nil {
 		if existingDL.Code == code {
 			return constants.ErrCodeAlreadyExists
 		}
@@ -78,7 +79,7 @@ func (s *DLService) UpdateDL(req *dl.UpdateRequest) (*dtos.DLDto, error) {
 	targetDL.Code = req.Code
 	targetDL.Title = req.Title
 	targetDL.RowVersion++
-	if err := db.DB.Save(targetDL).Error; err != nil {
+	if err := s.db.Save(targetDL).Error; err != nil {
 		return nil, err
 	}
 
@@ -104,7 +105,7 @@ func (s *DLService) validateDLUpdateRequest(req *dl.UpdateRequest) (*models.DL, 
 
 func (s *DLService) validateCodeAndTitleUniqueWithDifferentId(code string, title string, id int) error {
 	var existingDL models.DL
-	if err := db.DB.Where("(code = ? OR title = ?) AND id != ?", code, title, id).First(&existingDL).Error; err == nil {
+	if err := s.db.Where("(code = ? OR title = ?) AND id != ?", code, title, id).First(&existingDL).Error; err == nil {
 		if existingDL.Code == code {
 			return constants.ErrCodeAlreadyExists
 		}
@@ -127,7 +128,7 @@ func (s *DLService) validateVersion(reqVersion int, targetVersion int) error {
 
 func (s *DLService) validateDLExists(id int) (*models.DL, error) {
 	var targetDL models.DL
-	if err := db.DB.Where("id = ?", id).First(&targetDL).Error; err != nil {
+	if err := s.db.Where("id = ?", id).First(&targetDL).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, constants.ErrDLNotFound
 		}
@@ -143,7 +144,7 @@ func (s *DLService) DeleteDL(req *dl.DeleteRequest) error {
 		return err
 	}
 
-	if err := db.DB.Delete(&targetDL).Error; err != nil {
+	if err := s.db.Delete(&targetDL).Error; err != nil {
 		log.Printf("unexpected error while deleting DL: %v", err)
 		return constants.ErrUnexpectedError
 	}
@@ -167,7 +168,7 @@ func (s *DLService) validateDLDeleteRequest(req *dl.DeleteRequest) (*models.DL, 
 
 func (s *DLService) validateDLHasNoReferences(id int) error {
 	var VoucherItemRefrencingThisDL models.VoucherItem
-	if err := db.DB.Where("dl_id = ?", id).First(&VoucherItemRefrencingThisDL).Error; err == nil {
+	if err := s.db.Where("dl_id = ?", id).First(&VoucherItemRefrencingThisDL).Error; err == nil {
 		return constants.ErrThereIsRefrenceToDL
 	}
 	return nil

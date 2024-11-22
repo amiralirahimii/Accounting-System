@@ -25,10 +25,14 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to load test configuration: %v", err)
 	}
 
-	err = db.Init()
+	theDB, err := db.Init()
 	if err != nil {
 		log.Fatalf("Failed to connect to the test database: %v", err)
 	}
+
+	dlService = DLService{db: theDB}
+	slService = SLService{db: theDB}
+	voucherService = VoucherService{db: theDB}
 
 	os.Exit(m.Run())
 }
