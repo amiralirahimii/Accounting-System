@@ -7,24 +7,11 @@ import (
 	"accountingsystem/internal/models"
 	"accountingsystem/internal/requests/sl"
 	"errors"
-	"log"
 
 	"gorm.io/gorm"
 )
 
-type SLService struct {
-	db *gorm.DB
-}
-
-func (s *SLService) InitService(db *gorm.DB) {
-	s.db = db
-}
-
-func (s *SLService) CreateSL(req *sl.InsertRequest) (*dtos.SLDto, error) {
-	if err := s.validateSLInsertRequest(req); err != nil {
-		return nil, err
-	}
-
+func (s *SLService) applySLCreation(req *sl.InsertRequest) (*dtos.SLDto, error) {
 	sl := models.SL{
 		Code:       req.Code,
 		Title:      req.Title,
@@ -49,8 +36,7 @@ func (s *SLService) validateCodeAndTitleUnique(code string, title string) error 
 			return constants.ErrTitleAlreadyExists
 		}
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Printf("unexpected error while checking for duplicates: %v", err)
-		return constants.ErrUnexpectedError
+		return err
 	}
 	return nil
 }
@@ -75,12 +61,7 @@ func (s *SLService) validateCodeAndTitleLength(code string, title string) error 
 	return nil
 }
 
-func (s *SLService) UpdateSL(req *sl.UpdateRequest) (*dtos.SLDto, error) {
-	targetSL, err := s.validateSLUpdateRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *SLService) applySLUpdate(req *sl.UpdateRequest, targetSL *models.SL) (*dtos.SLDto, error) {
 	targetSL.Code = req.Code
 	targetSL.Title = req.Title
 	targetSL.HasDL = req.HasDL
@@ -123,8 +104,7 @@ func (s *SLService) validateCodeAndTitleUniqueWithDifferentId(code string, title
 			return constants.ErrTitleAlreadyExists
 		}
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Printf("unexpected error while checking for duplicates: %v", err)
-		return constants.ErrUnexpectedError
+		return err
 	}
 	return nil
 }
@@ -150,22 +130,15 @@ func (s *SLService) validateSLExists(id int) (*models.SL, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, constants.ErrSLNotFound
 		}
-		log.Printf("unexpected error while finding SL: %v", err)
-		return nil, constants.ErrUnexpectedError
+		return nil, err
 	}
 	return &targetSL, nil
 }
 
-func (s *SLService) DeleteSL(req *sl.DeleteRequest) error {
-	targetSL, err := s.validateSLDeleteRequest(req)
-	if err != nil {
-		return err
-	}
-
+func (s *SLService) applySLDeletion(targetSL *models.SL) error {
 	if err := s.db.Delete(&targetSL).Error; err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -181,15 +154,6 @@ func (s *SLService) validateSLDeleteRequest(req *sl.DeleteRequest) (*models.SL, 
 		return nil, err
 	}
 	return targetSL, nil
-}
-
-func (s *SLService) GetSL(req *sl.GetRequest) (*dtos.SLDto, error) {
-	targetSL, err := s.validateSLGetRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
-	return mappers.ToSlDto(targetSL), nil
 }
 
 func (s *SLService) validateSLGetRequest(req *sl.GetRequest) (*models.SL, error) {
